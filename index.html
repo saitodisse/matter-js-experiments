@@ -146,26 +146,37 @@
                                 y: event.clientY,
                                 button: button
                             });
+
+                            if (button === 'Right') {
+                                var bodies = Query.point(world.bodies, {
+                                    x: event.clientX,
+                                    y: event.clientY
+                                });
+                                if (bodies.length > 0 && !bodies[0].isStatic) {
+                                    Composite.remove(world, bodies[0])
+                                }
+                            }
+
+                            // while holding left button + control key, create a random body every 100ms
+                            if (button === 'Left' && event.ctrlKey) {
+                                // Throttle object creation to every 100ms
+                                const currentTime = Date.now();
+                                if (!window.lastCreationTime || currentTime - window.lastCreationTime >= 100) {
+                                    var randomBody = createRandomBody(event.clientX, event.clientY);
+                                    Composite.add(world, randomBody);
+                                    window.lastCreationTime = currentTime;
+                                }
+                            }
                         }
                     }
                 };
 
                 // Toggle event logging based on debug mode
-                if (debugCheckbox.checked) {
-                    // Add event listeners
-                    render.canvas.addEventListener('mousedown', handlers.mousedown);
-                    render.canvas.addEventListener('mouseup', handlers.mouseup);
-                    render.canvas.addEventListener('click', handlers.click);
-                    render.canvas.addEventListener('contextmenu', handlers.contextmenu);
-                    render.canvas.addEventListener('mousemove', handlers.mousemove);
-                } else {
-                    // Remove event listeners using the stored handlers
-                    render.canvas.removeEventListener('mousedown', handlers.mousedown);
-                    render.canvas.removeEventListener('mouseup', handlers.mouseup);
-                    render.canvas.removeEventListener('click', handlers.click);
-                    render.canvas.removeEventListener('contextmenu', handlers.contextmenu);
-                    render.canvas.removeEventListener('mousemove', handlers.mousemove);
-                }
+                render.canvas.addEventListener('mousedown', handlers.mousedown);
+                render.canvas.addEventListener('mouseup', handlers.mouseup);
+                render.canvas.addEventListener('click', handlers.click);
+                render.canvas.addEventListener('contextmenu', handlers.contextmenu);
+                render.canvas.addEventListener('mousemove', handlers.mousemove);
             }
 
             // Initial update
@@ -262,10 +273,6 @@
                             }
                             // Remove o corpo do mundo
                             Composite.remove(world, body);
-                            // Se o corpo estava em um composto (como a pilha), remove-o também
-                            if (body.parent) {
-                                Composite.remove(body.parent, body);
-                            }
                             break; // Remove apenas o primeiro objeto encontrado
                         }
                     }
@@ -282,9 +289,6 @@
                     });
                 }
                 if (event.button === 2) { // Botão direito
-                    // event.preventDefault();
-                    // event.stopPropagation();
-
                     // Desabilitar temporariamente o MouseConstraint
                     mouseConstraint.enabled = false;
 
@@ -439,10 +443,52 @@
 
             // Adicionar um event listener de clique à tela para criar um novo objeto aleatório
             render.canvas.addEventListener('click', function (event) {
-                var x = event.clientX;
-                var y = event.clientY;
-                var randomBody = createRandomBody(x, y);
-                Composite.add(world, randomBody);
+                var mousePosition = {
+                    x: event.clientX,
+                    y: event.clientY
+                };
+
+                // Encontrar o corpo clicado
+                var bodies = Query.point(world.bodies, {
+                    x: event.clientX,
+                    y: event.clientY
+                });
+
+                if (bodies.length > 0) {
+                    // Pegar o primeiro corpo não estático encontrado
+                    var clickedBody = bodies.find(body => !body.isStatic);
+
+                    if (clickedBody) {
+                        // Calcular a direção do centro do corpo até o ponto de clique
+                        var direction = Vector.sub(clickedBody.position, mousePosition);
+                        // Normalizar a direção
+                        direction = Vector.normalise(direction);
+
+                        // Calcular a distância do centro até o ponto de clique
+                        var distance = Vector.magnitude(Vector.sub(clickedBody.position, mousePosition));
+
+                        // Calcular a força baseada na distância (quanto mais longe do centro, maior a força)
+                        var force = Vector.mult(direction, distance * 0.01); // Ajuste o multiplicador conforme necessário
+
+                        // Aplicar a força no corpo
+                        Matter.Body.applyForce(clickedBody, clickedBody.position, force);
+
+                        if (debugCheckbox.checked) {
+                            console.log('Body Repelled:', {
+                                id: clickedBody.id,
+                                type: clickedBody.circleRadius ? 'Circle' :
+                                    clickedBody.vertices ? 'Polygon' : 'Rectangle',
+                                position: { x: clickedBody.position.x, y: clickedBody.position.y },
+                                force: force,
+                                distance: distance
+                            });
+                        }
+                    }
+                } else {
+                    // Se não clicou em nenhum corpo, criar um novo
+                    var randomBody = createRandomBody(event.clientX, event.clientY);
+                    Composite.add(world, randomBody);
+                }
             });
 
             // contexto para MatterTools.Demo
