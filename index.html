@@ -105,61 +105,66 @@
                 render.options.wireframes = debugCheckbox.checked;
                 localStorage.setItem('debugMode', debugCheckbox.checked);
 
-                // Toggle event logging based on debug mode
-                if (debugCheckbox.checked) {
-                    // Log mouse interactions
-                    render.canvas.addEventListener('mousedown', function (event) {
+                // Store handler functions
+                const handlers = {
+                    mousedown: function (event) {
                         const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
                         console.log(`${button} Mouse Down:`, {
                             x: event.clientX,
                             y: event.clientY,
                             button: button
                         });
-                    });
-
-                    render.canvas.addEventListener('mouseup', function (event) {
+                    },
+                    mouseup: function (event) {
                         const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
                         console.log(`${button} Mouse Up:`, {
                             x: event.clientX,
                             y: event.clientY,
                             button: button
                         });
-                    });
-
-                    render.canvas.addEventListener('click', function (event) {
+                    },
+                    click: function (event) {
                         const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
                         console.log(`${button} Click - Object Created:`, {
                             x: event.clientX,
                             y: event.clientY,
                             button: button
                         });
-                    });
-
-                    render.canvas.addEventListener('contextmenu', function (event) {
+                    },
+                    contextmenu: function (event) {
                         console.log('Right Click - Object Removed:', {
                             x: event.clientX,
                             y: event.clientY,
                             button: 'Right'
                         });
-                    });
+                    },
+                    mousemove: function (event) {
+                        if (event.buttons > 0) {
+                            const button = event.buttons === 1 ? 'Left' : event.buttons === 4 ? 'Right' : 'Middle';
+                            console.log(`${button} Mouse Move (while pressed):`, {
+                                x: event.clientX,
+                                y: event.clientY,
+                                button: button
+                            });
+                        }
+                    }
+                };
 
-                    // render.canvas.addEventListener('mousemove', function (event) {
-                    //     if (event.buttons > 0) { // Only log if a button is pressed
-                    //         const button = event.buttons === 1 ? 'Left' : event.buttons === 4 ? 'Right' : 'Middle';
-                    //         console.log(`${button} Mouse Move (while pressed):`, {
-                    //             x: event.clientX,
-                    //             y: event.clientY,
-                    //             button: button
-                    //         });
-                    //     }
-                    // });
+                // Toggle event logging based on debug mode
+                if (debugCheckbox.checked) {
+                    // Add event listeners
+                    render.canvas.addEventListener('mousedown', handlers.mousedown);
+                    render.canvas.addEventListener('mouseup', handlers.mouseup);
+                    render.canvas.addEventListener('click', handlers.click);
+                    render.canvas.addEventListener('contextmenu', handlers.contextmenu);
+                    render.canvas.addEventListener('mousemove', handlers.mousemove);
                 } else {
-                    // Remove all event listeners when debug mode is disabled
-                    render.canvas.removeEventListener('mousedown', null);
-                    render.canvas.removeEventListener('mouseup', null);
-                    render.canvas.removeEventListener('click', null);
-                    render.canvas.removeEventListener('contextmenu', null);
-                    render.canvas.removeEventListener('mousemove', null);
+                    // Remove event listeners using the stored handlers
+                    render.canvas.removeEventListener('mousedown', handlers.mousedown);
+                    render.canvas.removeEventListener('mouseup', handlers.mouseup);
+                    render.canvas.removeEventListener('click', handlers.click);
+                    render.canvas.removeEventListener('contextmenu', handlers.contextmenu);
+                    render.canvas.removeEventListener('mousemove', handlers.mousemove);
                 }
             }
 
@@ -251,6 +256,44 @@
             // manter o rato sincronizado com a renderização
             render.mouse = mouse;
 
+            // Adicionar um event listener de clique com o botão direito do rato à tela para remover corpos
+            render.canvas.addEventListener('mousedown', function (event) {
+                if (event.button === 2) { // Botão direito
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    // Desabilitar temporariamente o MouseConstraint
+                    mouseConstraint.enabled = false;
+
+                    var mousePosition = Mouse.create(render.canvas).position;
+
+                    // Use Matter.Query.point para encontrar corpos que contenham o ponto do mouse
+                    var bodies = Query.point(world.bodies, mousePosition);
+
+                    // Itere sobre os corpos encontrados e remova-os
+                    for (var i = 0; i < bodies.length; i++) {
+                        var body = bodies[i];
+                        if (!body.isStatic) { // Verifique se o corpo não é estático antes de removê-lo
+                            // Log object removal if debug mode is enabled
+                            if (debugCheckbox.checked) {
+                                console.log('Object Removed:', {
+                                    id: body.id,
+                                    type: body.circleRadius ? 'Circle' :
+                                        body.vertices ? 'Polygon' : 'Rectangle',
+                                    position: { x: body.position.x, y: body.position.y }
+                                });
+                            }
+                            Composite.remove(world, body);
+                        }
+                    }
+
+                    // Reabilitar o MouseConstraint após um pequeno delay
+                    setTimeout(() => {
+                        mouseConstraint.enabled = true;
+                    }, 100);
+                }
+            }, true);
+
             // ajustar o viewport de renderização à cena
             Render.lookAt(render, {
                 min: { x: 0, y: 0 },
@@ -308,14 +351,6 @@
                 }
             });
 
-            // Adicionar um event listener de clique à tela para criar um novo objeto aleatório
-            render.canvas.addEventListener('click', function (event) {
-                var x = event.clientX;
-                var y = event.clientY;
-                var randomBody = createRandomBody(x, y);
-                Composite.add(world, randomBody);
-            });
-
             // Função para criar um novo corpo aleatório (círculo, polígono ou retângulo)
             function createRandomBody(x, y) {
                 var type = Math.random();
@@ -323,7 +358,7 @@
 
                 if (type < 0.33) { // Círculo
                     body = Bodies.circle(x, y, Common.random(10, 40), {
-                        restitution: 0.9, // Aumentei a restituição
+                        restitution: 0.9,
                         friction: 0.1,
                         render: {
                             fillStyle: Common.choose(['#F44336', '#E53935', '#D32F2F', '#C62828', '#B71C1C']),
@@ -332,9 +367,9 @@
                         }
                     });
                 } else if (type < 0.66) { // Polígono
-                    var sides = Math.floor(Common.random(3, 8)); // Número aleatório de lados entre 3 e 8
+                    var sides = Math.floor(Common.random(3, 8));
                     body = Bodies.polygon(x, y, sides, Common.random(20, 50), {
-                        restitution: 0.9, // Aumentei a restituição
+                        restitution: 0.9,
                         friction: 0.1,
                         render: {
                             fillStyle: Common.choose(['#4CAF50', '#8BC34A', '#66BB6A', '#43A047', '#388E3C']),
@@ -346,7 +381,7 @@
                     var width = Common.random(30, 80);
                     var height = Common.random(30, 80);
                     body = Bodies.rectangle(x, y, width, height, {
-                        restitution: 0.9, // Aumentei a restituição
+                        restitution: 0.9,
                         friction: 0.1,
                         render: {
                             fillStyle: Common.choose(['#2196F3', '#64B5F6', '#42A5F5', '#1E88E5', '#1565C0']),
@@ -355,25 +390,28 @@
                         }
                     });
                 }
+
+                // Log object creation if debug mode is enabled
+                if (debugCheckbox.checked) {
+                    console.log('Object Created:', {
+                        id: body.id,
+                        type: type < 0.33 ? 'Circle' : type < 0.66 ? 'Polygon' : 'Rectangle',
+                        position: { x: body.position.x, y: body.position.y },
+                        size: type < 0.33 ? { radius: body.circleRadius } :
+                            type < 0.66 ? { sides: body.vertices.length, radius: body.radius } :
+                                { width: body.width, height: body.height }
+                    });
+                }
+
                 return body;
             }
 
-            // Adicionar um event listener de clique com o botão direito do rato à tela para remover corpos
-            render.canvas.addEventListener('contextmenu', function (event) {
-                event.preventDefault(); // Prevenir que o menu de contexto padrão apareça
-
-                var mousePosition = Mouse.create(render.canvas).position;
-
-                // Use Matter.Query.point para encontrar corpos que contenham o ponto do mouse
-                var bodies = Query.point(world.bodies, mousePosition);
-
-                // Itere sobre os corpos encontrados e remova-os
-                for (var i = 0; i < bodies.length; i++) {
-                    var body = bodies[i];
-                    if (!body.isStatic) { // Verifique se o corpo não é estático antes de removê-lo
-                        Composite.remove(world, body);
-                    }
-                }
+            // Adicionar um event listener de clique à tela para criar um novo objeto aleatório
+            render.canvas.addEventListener('click', function (event) {
+                var x = event.clientX;
+                var y = event.clientY;
+                var randomBody = createRandomBody(x, y);
+                Composite.add(world, randomBody);
             });
 
             // contexto para MatterTools.Demo
