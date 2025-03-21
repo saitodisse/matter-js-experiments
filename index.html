@@ -108,7 +108,7 @@
                 // Store handler functions
                 const handlers = {
                     mousedown: function (event) {
-                        const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
+                        const button = event.button === 0 ? 'Left' : event.button === 1 ? 'Middle' : 'Right';
                         console.log(`${button} Mouse Down:`, {
                             x: event.clientX,
                             y: event.clientY,
@@ -116,7 +116,7 @@
                         });
                     },
                     mouseup: function (event) {
-                        const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
+                        const button = event.button === 0 ? 'Left' : event.button === 1 ? 'Middle' : 'Right';
                         console.log(`${button} Mouse Up:`, {
                             x: event.clientX,
                             y: event.clientY,
@@ -124,7 +124,7 @@
                         });
                     },
                     click: function (event) {
-                        const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
+                        const button = event.button === 0 ? 'Left' : event.button === 1 ? 'Middle' : 'Right';
                         console.log(`${button} Click - Object Created:`, {
                             x: event.clientX,
                             y: event.clientY,
@@ -140,7 +140,7 @@
                     },
                     mousemove: function (event) {
                         if (event.buttons > 0) {
-                            const button = event.buttons === 1 ? 'Left' : event.buttons === 4 ? 'Right' : 'Middle';
+                            const button = event.buttons === 1 ? 'Left' : event.buttons === 4 ? 'Middle' : 'Right';
                             console.log(`${button} Mouse Move (while pressed):`, {
                                 x: event.clientX,
                                 y: event.clientY,
@@ -208,20 +208,7 @@
                 })
             ]);
 
-            var stack = Composites.stack(100, 0, 5, 4, 10, 10, function (x, y) {
-                return Bodies.circle(x, y, Common.random(15, 30), {
-                    restitution: 0.9, // Aumentei a restituição para tornar os objetos mais saltitantes
-                    friction: 0.1,
-                    render: {
-                        fillStyle: Common.choose(['#C62828', '#D32F2F', '#E53935', '#F44336', '#FF5252', '#FFCDD2']),
-                        strokeStyle: '#B71C1C',
-                        lineWidth: 1
-                    }
-                });
-            });
-
             Composite.add(world, [
-                stack,
                 Bodies.polygon(200, 460, 3, 60, {
                     restitution: 0.9, // Aumentei a restituição
                     friction: 0.1,
@@ -256,11 +243,47 @@
             // manter o rato sincronizado com a renderização
             render.mouse = mouse;
 
+            // Adicionar event listener para a tecla DEL
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Delete') {
+                    // Encontrar o primeiro corpo não estático
+                    var bodies = Composite.allBodies(world);
+                    for (var i = 0; i < bodies.length; i++) {
+                        var body = bodies[i];
+                        if (!body.isStatic) {
+                            // Log object removal if debug mode is enabled
+                            if (debugCheckbox.checked) {
+                                console.log('Object Removed (DEL key):', {
+                                    id: body.id,
+                                    type: body.circleRadius ? 'Circle' :
+                                        body.vertices ? 'Polygon' : 'Rectangle',
+                                    position: { x: body.position.x, y: body.position.y }
+                                });
+                            }
+                            // Remove o corpo do mundo
+                            Composite.remove(world, body);
+                            // Se o corpo estava em um composto (como a pilha), remove-o também
+                            if (body.parent) {
+                                Composite.remove(body.parent, body);
+                            }
+                            break; // Remove apenas o primeiro objeto encontrado
+                        }
+                    }
+                }
+            });
+
             // Adicionar um event listener de clique com o botão direito do rato à tela para remover corpos
             render.canvas.addEventListener('mousedown', function (event) {
+                if (debugCheckbox.checked) {
+                    console.log('mousedown', {
+                        x: event.clientX,
+                        y: event.clientY,
+                        button: event.button
+                    });
+                }
                 if (event.button === 2) { // Botão direito
-                    event.preventDefault();
-                    event.stopPropagation();
+                    // event.preventDefault();
+                    // event.stopPropagation();
 
                     // Desabilitar temporariamente o MouseConstraint
                     mouseConstraint.enabled = false;
@@ -268,7 +291,15 @@
                     var mousePosition = Mouse.create(render.canvas).position;
 
                     // Use Matter.Query.point para encontrar corpos que contenham o ponto do mouse
-                    var bodies = Query.point(world.bodies, mousePosition);
+                    var bodies = Query.point(world.bodies, {
+                        x: event.clientX,
+                        y: event.clientY
+                    });
+
+                    if (debugCheckbox.checked) {
+                        console.log('world.bodies', world.bodies)
+                        console.log(`mousedown: ${event.clientX}, ${event.clientY} bodies id: ${bodies.map(body => body.id)}`, bodies);
+                    }
 
                     // Itere sobre os corpos encontrados e remova-os
                     for (var i = 0; i < bodies.length; i++) {
