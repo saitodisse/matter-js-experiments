@@ -104,6 +104,63 @@
                 render.options.showAngleIndicator = debugCheckbox.checked;
                 render.options.wireframes = debugCheckbox.checked;
                 localStorage.setItem('debugMode', debugCheckbox.checked);
+
+                // Toggle event logging based on debug mode
+                if (debugCheckbox.checked) {
+                    // Log mouse interactions
+                    render.canvas.addEventListener('mousedown', function (event) {
+                        const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
+                        console.log(`${button} Mouse Down:`, {
+                            x: event.clientX,
+                            y: event.clientY,
+                            button: button
+                        });
+                    });
+
+                    render.canvas.addEventListener('mouseup', function (event) {
+                        const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
+                        console.log(`${button} Mouse Up:`, {
+                            x: event.clientX,
+                            y: event.clientY,
+                            button: button
+                        });
+                    });
+
+                    render.canvas.addEventListener('click', function (event) {
+                        const button = event.button === 0 ? 'Left' : event.button === 2 ? 'Right' : 'Middle';
+                        console.log(`${button} Click - Object Created:`, {
+                            x: event.clientX,
+                            y: event.clientY,
+                            button: button
+                        });
+                    });
+
+                    render.canvas.addEventListener('contextmenu', function (event) {
+                        console.log('Right Click - Object Removed:', {
+                            x: event.clientX,
+                            y: event.clientY,
+                            button: 'Right'
+                        });
+                    });
+
+                    // render.canvas.addEventListener('mousemove', function (event) {
+                    //     if (event.buttons > 0) { // Only log if a button is pressed
+                    //         const button = event.buttons === 1 ? 'Left' : event.buttons === 4 ? 'Right' : 'Middle';
+                    //         console.log(`${button} Mouse Move (while pressed):`, {
+                    //             x: event.clientX,
+                    //             y: event.clientY,
+                    //             button: button
+                    //         });
+                    //     }
+                    // });
+                } else {
+                    // Remove all event listeners when debug mode is disabled
+                    render.canvas.removeEventListener('mousedown', null);
+                    render.canvas.removeEventListener('mouseup', null);
+                    render.canvas.removeEventListener('click', null);
+                    render.canvas.removeEventListener('contextmenu', null);
+                    render.canvas.removeEventListener('mousemove', null);
+                }
             }
 
             // Initial update
