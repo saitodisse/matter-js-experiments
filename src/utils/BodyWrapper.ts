@@ -1,9 +1,17 @@
-import * as Matter from "matter-js";
+import Matter from "matter-js";
 
 export class BodyWrapper {
-    private bounds: { min: { x: number, y: number }, max: { x: number, y: number } };
+    private bounds: {
+        min: { x: number; y: number };
+        max: { x: number; y: number };
+    };
 
-    constructor(bounds: { min: { x: number, y: number }, max: { x: number, y: number } }) {
+    constructor(
+        bounds: {
+            min: { x: number; y: number };
+            max: { x: number; y: number };
+        },
+    ) {
         this.bounds = bounds;
     }
 
@@ -33,7 +41,12 @@ export class BodyWrapper {
         }
     }
 
-    public setBounds(bounds: { min: { x: number, y: number }, max: { x: number, y: number } }): void {
+    public setBounds(
+        bounds: {
+            min: { x: number; y: number };
+            max: { x: number; y: number };
+        },
+    ): void {
         this.bounds = bounds;
     }
 }
