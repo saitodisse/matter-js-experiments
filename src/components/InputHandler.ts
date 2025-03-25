@@ -10,6 +10,7 @@ import Matter from "matter-js";
 import { Engine } from "../core/Engine";
 import { BodyFactory } from "./BodyFactory";
 import { DebugControl } from "./DebugControl";
+import { GameManager } from "../core/GameManager";
 
 /**
  * InputHandler Class
@@ -23,10 +24,12 @@ export class InputHandler {
     private engine: Engine;
     private bodyFactory: BodyFactory;
     private debugControl: DebugControl;
-    
-    // Canvas and physics world references
+    // Mouse position
+    private mousePosition: { x: number; y: number } = { x: 0, y: 0 };
+    // Canvas element
     private canvas: HTMLCanvasElement;
-    private world: Matter.World;
+    // Game manager for tracking player actions
+    private gameManager: GameManager;
 
     /**
      * InputHandler constructor
@@ -43,20 +46,17 @@ export class InputHandler {
         this.engine = engine;
         this.bodyFactory = bodyFactory;
         this.debugControl = debugControl;
-        this.canvas = engine.getCanvas();
-        this.world = engine.getWorld();
-
-        // Set up all event listeners
-        this.initializeEventListeners();
+        this.canvas = this.engine.getCanvas();
+        this.gameManager = GameManager.getInstance();
+        
+        // Set up event listeners
+        this.setupEventListeners();
     }
 
     /**
-     * Sets up all event listeners for user input
-     * 
-     * Attaches event handlers for mouse and keyboard events to the canvas
-     * and document elements.
+     * Sets up all event listeners
      */
-    private initializeEventListeners(): void {
+    private setupEventListeners(): void {
         // Mouse down event - triggered when a mouse button is pressed
         this.canvas.addEventListener(
             "mousedown",
@@ -95,6 +95,20 @@ export class InputHandler {
     }
 
     /**
+     * Gets the mouse position relative to the canvas
+     * 
+     * @param event - Mouse event
+     * @returns Object with x and y coordinates
+     */
+    private getMousePosition(event: MouseEvent): { x: number; y: number } {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            x: event.clientX - rect.left,
+            y: event.clientY - rect.top
+        };
+    }
+
+    /**
      * Handles mouse down events
      * 
      * For right-click (button 2), removes non-static bodies at the click position.
@@ -116,7 +130,7 @@ export class InputHandler {
         // Handle right-click (button 2)
         if (event.button === 2) {
             // Find all bodies at the click position
-            const bodies = Matter.Query.point(this.world.bodies, {
+            const bodies = Matter.Query.point(this.engine.getAllBodies(), {
                 x: event.clientX,
                 y: event.clientY,
             });
@@ -178,69 +192,64 @@ export class InputHandler {
      * @param event - The mouse event
      */
     private handleClick(event: MouseEvent): void {
-        // Log the click event if debug mode is enabled
-        this.debugControl.logEvent("Click", {
-            x: event.clientX,
-            y: event.clientY,
-            button: event.button === 0
-                ? "Left"
-                : event.button === 1
-                ? "Middle"
-                : "Right",
-        });
+        // Get the mouse position relative to the canvas
+        const mousePosition = this.getMousePosition(event);
+        // Store the mouse position for use in other methods
+        this.mousePosition = mousePosition;
 
-        // Store the mouse position
-        const mousePosition = {
-            x: event.clientX,
-            y: event.clientY,
-        };
+        // Get all bodies in the simulation
+        const allBodies = this.engine.getAllBodies();
 
-        // Find all bodies at the click position
-        const bodies = Matter.Query.point(this.world.bodies, mousePosition);
+        // Find the first body that contains the mouse position
+        const clickedBody = Matter.Query.point(allBodies, mousePosition)[0];
 
-        if (bodies.length > 0) {
-            // Find the first non-static body at the click position
-            const clickedBody = bodies.find((body) => !body.isStatic);
-
-            if (clickedBody) {
-                // Calculate the direction from the mouse to the body
-                const direction = Matter.Vector.sub(
-                    clickedBody.position,
-                    mousePosition,
-                );
-                // Normalize the direction vector
-                const normalizedDirection = Matter.Vector.normalise(direction);
-                // Calculate the distance between the mouse and the body
-                const distance = Matter.Vector.magnitude(direction);
-                // Calculate the force to apply (proportional to distance)
-                const force = Matter.Vector.mult(
-                    normalizedDirection,
-                    distance * 0.015,
-                );
-
-                // Apply the force to the body
-                Matter.Body.applyForce(
-                    clickedBody,
-                    clickedBody.position,
-                    force,
-                );
-
-                // Log the repelling action if debug mode is enabled
-                this.debugControl.logEvent("Body Repelled", {
-                    id: clickedBody.id,
-                    type: clickedBody.circleRadius
-                        ? "Circle"
-                        : clickedBody.vertices
-                        ? "Polygon"
-                        : "Rectangle",
-                    position: {
-                        x: clickedBody.position.x,
-                        y: clickedBody.position.y,
-                    },
-                    force: force,
-                    distance: distance,
-                });
+        // If a body was clicked
+        if (clickedBody) {
+            // If the body is static (like a wall), do nothing
+            if (clickedBody.isStatic) {
+                return;
             }
+
+            // Calculate the direction from the mouse to the body
+            const direction = Matter.Vector.sub(
+                clickedBody.position,
+                mousePosition,
+            );
+            // Normalize the direction vector
+            const normalizedDirection = Matter.Vector.normalise(direction);
+            // Calculate the distance between the mouse and the body
+            const distance = Matter.Vector.magnitude(direction);
+            // Calculate the force to apply (proportional to distance)
+            const force = Matter.Vector.mult(
+                normalizedDirection,
+                distance * 0.015,
+            );
+
+            // Apply the force to the body
+            Matter.Body.applyForce(
+                clickedBody,
+                clickedBody.position,
+                force,
+            );
+            
+            // Increment the attempts counter in the game manager
+            this.gameManager.addAttempt();
+
+            // Log the repelling action if debug mode is enabled
+            this.debugControl.logEvent("Body Repelled", {
+                id: clickedBody.id,
+                type: clickedBody.circleRadius
+                    ? "Circle"
+                    : clickedBody.vertices
+                    ? "Polygon"
+                    : "Rectangle",
+                position: {
+                    x: clickedBody.position.x,
+                    y: clickedBody.position.y,
+                },
+                force: force,
+                distance: distance,
+            });
         } else {
             // If Ctrl key is pressed and no body was clicked, create a random body
             if (event.ctrlKey) {
@@ -299,7 +308,7 @@ export class InputHandler {
             // Handle right-click drag (remove bodies)
             if (button === "Right") {
                 // Find all bodies at the current mouse position
-                const bodies = Matter.Query.point(this.world.bodies, {
+                const bodies = Matter.Query.point(this.engine.getAllBodies(), {
                     x: event.clientX,
                     y: event.clientY,
                 });

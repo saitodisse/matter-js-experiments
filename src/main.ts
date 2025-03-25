@@ -14,6 +14,7 @@ import { BoundaryWalls } from "./components/BoundaryWalls";
 import { BoundaryBox } from "./components/BoundaryBox";
 import { InitialShapes } from "./components/InitialShapes";
 import { BodyWrapper } from "./utils/BodyWrapper";
+import { GameManager } from "./core/GameManager";
 import Matter from "matter-js";
 
 /**
@@ -29,6 +30,7 @@ class BallPoolSimulation {
     private debugControl: DebugControl;
     private bodyFactory: BodyFactory;
     private bodyWrapper: BodyWrapper;
+    private gameManager: GameManager;
 
     /**
      * BallPoolSimulation constructor
@@ -54,6 +56,9 @@ class BallPoolSimulation {
 
         // Create body factory for generating physics bodies
         this.bodyFactory = new BodyFactory(this.debugControl);
+
+        // Initialize the game manager (singleton)
+        this.gameManager = GameManager.getInstance();
 
         // Create boundary walls around the entire screen
         new BoundaryWalls(
