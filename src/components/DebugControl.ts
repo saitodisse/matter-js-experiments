@@ -1,6 +1,6 @@
 /**
  * DebugControl.ts
- * 
+ *
  * This file contains the DebugControl class, which provides debugging functionality
  * for the Matter.js physics simulation. It adds a UI control to toggle debug mode
  * and manages debug-related settings and features.
@@ -10,7 +10,7 @@ import Matter from "matter-js";
 
 /**
  * DebugControl Class
- * 
+ *
  * Manages debugging features for the physics simulation, including:
  * - A checkbox UI element to toggle debug mode
  * - Debug visualization options for the renderer
@@ -21,27 +21,27 @@ export class DebugControl {
     // UI elements
     private element: HTMLDivElement;
     private checkbox: HTMLInputElement;
-    
+
     // Matter.js components
     private render: Matter.Render;
     private engine: Matter.Engine;
     private mouse: Matter.Mouse;
     private mouseConstraint: Matter.MouseConstraint;
-    
+
     // State and callbacks
     private isDebugMode: boolean;
     private onChangeCallbacks: ((isDebugMode: boolean) => void)[] = [];
 
     /**
      * DebugControl constructor
-     * 
+     *
      * @param engine - The Matter.js engine instance
      * @param render - The Matter.js renderer instance
      */
     constructor(engine: Matter.Engine, render: Matter.Render) {
         this.engine = engine;
         this.render = render;
-        
+
         // Load debug mode state from localStorage (persists between page refreshes)
         this.isDebugMode = localStorage.getItem("debugMode") === "true";
 
@@ -51,7 +51,6 @@ export class DebugControl {
         this.element.innerHTML = `
             <label>
                 <input type="checkbox" id="debugMode">
-                Debug Mode
             </label>
         `;
         document.body.appendChild(this.element);
@@ -71,7 +70,7 @@ export class DebugControl {
 
     /**
      * Updates the debug mode settings based on the checkbox state
-     * 
+     *
      * This method is called when the debug checkbox is toggled and during initialization.
      * It updates renderer options, mouse interaction, and notifies registered callbacks.
      */
@@ -94,9 +93,9 @@ export class DebugControl {
             this.mouseConstraint = Matter.MouseConstraint.create(this.engine, {
                 mouse: this.mouse,
                 constraint: {
-                    stiffness: 0.2,  // How rigid the constraint is
+                    stiffness: 0.2, // How rigid the constraint is
                     render: {
-                        visible: true,  // Show the constraint when dragging
+                        visible: true, // Show the constraint when dragging
                     },
                 },
             });
@@ -130,7 +129,7 @@ export class DebugControl {
 
     /**
      * Checks if debug mode is currently enabled
-     * 
+     *
      * @returns True if debug mode is enabled, false otherwise
      */
     public isEnabled(): boolean {
@@ -139,7 +138,7 @@ export class DebugControl {
 
     /**
      * Registers a callback function to be called when debug mode changes
-     * 
+     *
      * @param callback - Function to call when debug mode changes
      */
     public onChange(callback: (isDebugMode: boolean) => void): void {
@@ -148,7 +147,7 @@ export class DebugControl {
 
     /**
      * Logs an event to the console if debug mode is enabled
-     * 
+     *
      * @param eventName - Name of the event to log
      * @param data - Data associated with the event
      */
