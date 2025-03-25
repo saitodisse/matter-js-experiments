@@ -1,1 +1,9 @@
+# vite project
 node_modules
+# vite build
+build
+# vite preview
+public
+# vite dev
+src/dist
+
