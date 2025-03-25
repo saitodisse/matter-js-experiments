@@ -4,6 +4,6 @@ node_modules
 build
 # vite preview
 public
-# vite dev
-src/dist
+# vite deploy
+dist
 

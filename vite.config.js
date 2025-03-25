@@ -12,7 +12,7 @@ export default {
   // Build options
   build: {
     // Output directory for production build
-    outDir: 'dist',
+    outDir: '../dist',
     // Generate sourcemaps for better debugging
     sourcemap: true
   },
