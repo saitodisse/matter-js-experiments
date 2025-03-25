@@ -4,6 +4,7 @@ import { BodyFactory } from "./components/BodyFactory";
 import { DebugControl } from "./components/DebugControl";
 import { InputHandler } from "./components/InputHandler";
 import { BoundaryWalls } from "./components/BoundaryWalls";
+import { BoundaryBox } from "./components/BoundaryBox";
 import { InitialShapes } from "./components/InitialShapes";
 import { BodyWrapper } from "./utils/BodyWrapper";
 import Matter from "matter-js";
@@ -12,9 +13,6 @@ class BallPoolSimulation {
     private engine: Engine;
     private debugControl: DebugControl;
     private bodyFactory: BodyFactory;
-    private inputHandler: InputHandler;
-    private boundaryWalls: BoundaryWalls;
-    private initialShapes: InitialShapes;
     private bodyWrapper: BodyWrapper;
 
     constructor() {
@@ -38,17 +36,24 @@ class BallPoolSimulation {
         this.bodyFactory = new BodyFactory(this.debugControl);
 
         // Create boundary walls
-        this.boundaryWalls = new BoundaryWalls(
+        new BoundaryWalls(
+            this.engine,
+            window.innerWidth,
+            window.innerHeight,
+        );
+
+        // Create boundary box
+        new BoundaryBox(
             this.engine,
             window.innerWidth,
             window.innerHeight,
         );
 
         // Create initial shapes
-        this.initialShapes = new InitialShapes(this.engine);
+        new InitialShapes(this.engine);
 
         // Create input handler
-        this.inputHandler = new InputHandler(
+        new InputHandler(
             this.engine,
             this.bodyFactory,
             this.debugControl,

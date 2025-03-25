@@ -146,7 +146,7 @@ export class InputHandler {
                 const distance = Matter.Vector.magnitude(direction);
                 const force = Matter.Vector.mult(
                     normalizedDirection,
-                    distance * 0.01,
+                    distance * 0.015,
                 );
 
                 Matter.Body.applyForce(
@@ -230,25 +230,6 @@ export class InputHandler {
                 }
             }
         }
-
-        // // Apply repulsion force to bodies near the mouse
-        // const mousePosition = { x: event.clientX, y: event.clientY };
-        // const repulsionDistance = 150;
-        // const repulsionStrength = 0.05;
-
-        // for (const body of this.engine.getAllBodies()) {
-        //     const distance = Matter.Vector.magnitude(
-        //         Matter.Vector.sub(body.position, mousePosition),
-        //     );
-
-        //     if (distance < repulsionDistance) {
-        //         const direction = Matter.Vector.normalise(
-        //             Matter.Vector.sub(body.position, mousePosition),
-        //         );
-        //         const force = Matter.Vector.mult(direction, repulsionStrength);
-        //         Matter.Body.applyForce(body, body.position, force);
-        //     }
-        // }
     }
 
     private handleKeyDown(event: KeyboardEvent): void {
