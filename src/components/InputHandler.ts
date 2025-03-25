@@ -171,11 +171,13 @@ export class InputHandler {
                 });
             }
         } else {
-            const randomBody = this.bodyFactory.createRandomBody(
-                event.clientX,
-                event.clientY,
-            );
-            this.engine.addBody(randomBody);
+            if (event.ctrlKey) {
+                const randomBody = this.bodyFactory.createRandomBody(
+                    event.clientX,
+                    event.clientY,
+                );
+                this.engine.addBody(randomBody);
+            }
         }
     }
 
