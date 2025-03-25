@@ -1,4 +1,4 @@
-import * as Matter from "matter-js";
+import Matter from "matter-js";
 import { Engine } from "../core/Engine";
 
 export class BoundaryWalls {
@@ -28,7 +28,7 @@ export class BoundaryWalls {
                     strokeStyle: "#000",
                     lineWidth: 2,
                 },
-            }
+            },
         );
 
         // Left wall
@@ -44,7 +44,7 @@ export class BoundaryWalls {
                     strokeStyle: "#000",
                     lineWidth: 2,
                 },
-            }
+            },
         );
 
         // Right wall
@@ -60,7 +60,7 @@ export class BoundaryWalls {
                     strokeStyle: "#000",
                     lineWidth: 2,
                 },
-            }
+            },
         );
 
         this.walls = [bottomWall, leftWall, rightWall];

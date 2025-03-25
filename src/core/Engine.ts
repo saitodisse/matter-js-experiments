@@ -1,5 +1,5 @@
-import * as Matter from "matter-js";
-import { SimulationOptions, SimulationInstance } from "../types";
+import Matter from "matter-js";
+import { SimulationInstance, SimulationOptions } from "../types";
 
 export class Engine {
     private engine: Matter.Engine;
@@ -71,7 +71,12 @@ export class Engine {
         return Matter.Composite.allBodies(this.world);
     }
 
-    public lookAt(bounds: { min: { x: number, y: number }, max: { x: number, y: number } }): void {
+    public lookAt(
+        bounds: {
+            min: { x: number; y: number };
+            max: { x: number; y: number };
+        },
+    ): void {
         Matter.Render.lookAt(this.render, bounds);
     }
 
