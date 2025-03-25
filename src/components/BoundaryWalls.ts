@@ -63,7 +63,23 @@ export class BoundaryWalls {
             },
         );
 
-        this.walls = [bottomWall, leftWall, rightWall];
+        // Top wall
+        const topWall = Matter.Bodies.rectangle(
+            this.width / 2,
+            0,
+            this.width,
+            50.5,
+            {
+                isStatic: true,
+                render: {
+                    fillStyle: "#060a19",
+                    strokeStyle: "#000",
+                    lineWidth: 2,
+                },
+            },
+        );
+
+        this.walls = [bottomWall, leftWall, rightWall, topWall];
         this.engine.addBody(this.walls);
     }
 
