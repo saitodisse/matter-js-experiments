@@ -49,6 +49,7 @@ export class DebugControl {
         this.render.options.showCollisions = this.isDebugMode;
         this.render.options.showPositions = this.isDebugMode;
         this.render.options.showVelocity = this.isDebugMode;
+        this.render.options.showIds = this.isDebugMode;
 
         // add mouse control
         if (this.isDebugMode) {
