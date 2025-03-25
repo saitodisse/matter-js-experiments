@@ -5,7 +5,6 @@
  * such as player score, attempts, and provides methods for game events.
  */
 
-import Matter from "matter-js";
 import { Engine } from "./Engine";
 
 /**
@@ -32,6 +31,7 @@ export class GameManager {
     private gameOverModal: HTMLElement;
     private finalScoreElement: HTMLElement;
     private finalAttemptsElement: HTMLElement;
+    private restartButton: HTMLElement;
 
     // Reference to the engine
     private engine: Engine | null = null;
@@ -49,8 +49,7 @@ export class GameManager {
      * Private constructor to enforce singleton pattern
      */
     private constructor() {
-        this.createGameDisplay();
-        this.createGameOverModal();
+        this.initializeUIElements();
     }
 
     /**
@@ -94,149 +93,39 @@ export class GameManager {
     }
 
     /**
-     * Creates the game information display elements
+     * Initializes UI elements by getting references to the DOM elements
      */
-    private createGameDisplay(): void {
-        // Create container for game information
-        const gameInfoContainer = document.createElement("div");
-        gameInfoContainer.id = "game-info-container";
-        gameInfoContainer.style.position = "absolute";
-        gameInfoContainer.style.top = "20px";
-        gameInfoContainer.style.right = "20px";
-        gameInfoContainer.style.display = "flex";
-        gameInfoContainer.style.flexDirection = "column";
-        gameInfoContainer.style.gap = "10px";
-        gameInfoContainer.style.zIndex = "1000";
+    private initializeUIElements(): void {
+        // Get references to game info elements
+        this.scoreElement = document.getElementById(
+            "score-display",
+        ) as HTMLElement;
+        this.attemptsElement = document.getElementById(
+            "attempts-display",
+        ) as HTMLElement;
 
-        // Create score display element
-        this.scoreElement = document.createElement("div");
-        this.scoreElement.id = "score-display";
-        this.scoreElement.style.padding = "10px 20px";
-        this.scoreElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-        this.scoreElement.style.color = "white";
-        this.scoreElement.style.fontSize = "24px";
-        this.scoreElement.style.fontFamily = "Arial, sans-serif";
-        this.scoreElement.style.borderRadius = "5px";
-        /* cannot select text */
-        this.scoreElement.style.userSelect = "none";
+        // Get references to game over modal elements
+        this.gameOverModal = document.getElementById(
+            "game-over-modal",
+        ) as HTMLElement;
+        this.finalScoreElement = document.getElementById(
+            "final-score",
+        ) as HTMLElement;
+        this.finalAttemptsElement = document.getElementById(
+            "final-attempts",
+        ) as HTMLElement;
+        this.restartButton = document.getElementById(
+            "restart-button",
+        ) as HTMLElement;
 
-        // Create attempts display element
-        this.attemptsElement = document.createElement("div");
-        this.attemptsElement.id = "attempts-display";
-        this.attemptsElement.style.padding = "10px 20px";
-        this.attemptsElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
-        this.attemptsElement.style.color = "white";
-        this.attemptsElement.style.fontSize = "24px";
-        this.attemptsElement.style.fontFamily = "Arial, sans-serif";
-        this.attemptsElement.style.borderRadius = "5px";
-        /* cannot select text */
-        this.attemptsElement.style.userSelect = "none";
+        // Add click event to restart button
+        this.restartButton.addEventListener("click", () => {
+            this.restartGame();
+        });
 
         // Update displays with initial values
         this.updateScoreDisplay();
         this.updateAttemptsDisplay();
-
-        // Add elements to container
-        gameInfoContainer.appendChild(this.scoreElement);
-        gameInfoContainer.appendChild(this.attemptsElement);
-
-        // Add container to document body
-        document.body.appendChild(gameInfoContainer);
-    }
-
-    /**
-     * Creates the game over modal
-     */
-    private createGameOverModal(): void {
-        // Create modal container
-        this.gameOverModal = document.createElement("div");
-        this.gameOverModal.id = "game-over-modal";
-        this.gameOverModal.style.position = "fixed";
-        this.gameOverModal.style.top = "0";
-        this.gameOverModal.style.left = "0";
-        this.gameOverModal.style.width = "100%";
-        this.gameOverModal.style.height = "100%";
-        this.gameOverModal.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
-        this.gameOverModal.style.display = "flex";
-        this.gameOverModal.style.justifyContent = "center";
-        this.gameOverModal.style.alignItems = "center";
-        this.gameOverModal.style.zIndex = "2000";
-        this.gameOverModal.style.opacity = "0";
-        this.gameOverModal.style.transition = "opacity 0.5s ease";
-        this.gameOverModal.style.pointerEvents = "none";
-
-        // Create modal content
-        const modalContent = document.createElement("div");
-        modalContent.style.backgroundColor = "white";
-        modalContent.style.padding = "30px";
-        modalContent.style.borderRadius = "10px";
-        modalContent.style.textAlign = "center";
-        modalContent.style.maxWidth = "400px";
-
-        // Create game over title
-        const gameOverTitle = document.createElement("h2");
-        gameOverTitle.textContent = "Game Over!";
-        gameOverTitle.style.fontSize = "32px";
-        gameOverTitle.style.marginBottom = "20px";
-        gameOverTitle.style.color = "#333";
-
-        // Create congratulations message
-        const congratsMessage = document.createElement("p");
-        congratsMessage.textContent =
-            "Congratulations! You've collected all objects!";
-        congratsMessage.style.fontSize = "18px";
-        congratsMessage.style.marginBottom = "20px";
-        congratsMessage.style.color = "#555";
-
-        // Create final score element
-        this.finalScoreElement = document.createElement("p");
-        this.finalScoreElement.style.fontSize = "20px";
-        this.finalScoreElement.style.marginBottom = "10px";
-        this.finalScoreElement.style.fontWeight = "bold";
-
-        // Create final attempts element
-        this.finalAttemptsElement = document.createElement("p");
-        this.finalAttemptsElement.style.fontSize = "20px";
-        this.finalAttemptsElement.style.marginBottom = "30px";
-        this.finalAttemptsElement.style.fontWeight = "bold";
-
-        // Create restart button
-        const restartButton = document.createElement("button");
-        restartButton.textContent = "Play Again";
-        restartButton.style.backgroundColor = "#4CAF50";
-        restartButton.style.color = "white";
-        restartButton.style.border = "none";
-        restartButton.style.padding = "12px 24px";
-        restartButton.style.fontSize = "18px";
-        restartButton.style.borderRadius = "5px";
-        restartButton.style.cursor = "pointer";
-        restartButton.style.transition = "background-color 0.3s ease";
-
-        // Add hover effect
-        restartButton.onmouseover = () => {
-            restartButton.style.backgroundColor = "#45a049";
-        };
-        restartButton.onmouseout = () => {
-            restartButton.style.backgroundColor = "#4CAF50";
-        };
-
-        // Add click event to restart the game
-        restartButton.onclick = () => {
-            this.restartGame();
-        };
-
-        // Assemble modal content
-        modalContent.appendChild(gameOverTitle);
-        modalContent.appendChild(congratsMessage);
-        modalContent.appendChild(this.finalScoreElement);
-        modalContent.appendChild(this.finalAttemptsElement);
-        modalContent.appendChild(restartButton);
-
-        // Add content to modal
-        this.gameOverModal.appendChild(modalContent);
-
-        // Add modal to document body
-        document.body.appendChild(this.gameOverModal);
     }
 
     /**
