@@ -49,6 +49,7 @@ export class BoundaryBox {
         this.gameManager = GameManager.getInstance();
         this.createBoxParts();
         this.setupCollisionDetection();
+        this.handleCollision();
     }
 
     /**
@@ -153,6 +154,59 @@ export class BoundaryBox {
     }
 
     /**
+     * Handles collision events with the box
+     * 
+     * This method is called when a collision is detected between a body and the box.
+     * If a body enters the box, it will be destroyed and a point will be added to the score.
+     */
+    private handleCollision(): void {
+        // Get the game manager instance
+        const gameManager = GameManager.getInstance();
+        
+        // Add event listener for collision events
+        Matter.Events.on(this.engine.getEngine(), "collisionStart", (event) => {
+            // Get all collision pairs from the event
+            const pairs = event.pairs;
+
+            // Loop through all collision pairs
+            for (const pair of pairs) {
+                // Get the two bodies involved in the collision
+                const bodyA = pair.bodyA;
+                const bodyB = pair.bodyB;
+
+                // Check if one of the bodies is part of the box
+                const isBoxPartA = this.boxParts.includes(bodyA);
+                const isBoxPartB = this.boxParts.includes(bodyB);
+
+                // If neither body is part of the box, skip this pair
+                if (!isBoxPartA && !isBoxPartB) {
+                    continue;
+                }
+
+                // Get the other body (not the box part)
+                const otherBody = isBoxPartA ? bodyB : bodyA;
+
+                // Skip if the other body is static (like a wall)
+                if (otherBody.isStatic) {
+                    continue;
+                }
+
+                // Check if the body is inside the box
+                if (this.isBodyInsideBox(otherBody)) {
+                    // Add a point to the score
+                    gameManager.addScore();
+                    
+                    // Remove the body from the world
+                    Matter.Composite.remove(this.engine.getWorld(), otherBody);
+                    
+                    // Check if the game is over after removing the body
+                    gameManager.checkGameOver();
+                }
+            }
+        });
+    }
+
+    /**
      * Checks if any bodies are inside the box and handles them
      */
     private checkBodiesInBox(): void {
@@ -194,6 +248,19 @@ export class BoundaryBox {
             x > this.boxDimensions.x &&
             x < this.boxDimensions.x + this.boxDimensions.width &&
             y > this.boxDimensions.y + 85 &&
+            y < this.boxDimensions.y + this.boxDimensions.height
+        );
+    }
+
+    private isBodyInsideBox(body: Matter.Body): boolean {
+        // Get the body's position
+        const { x, y } = body.position;
+
+        // Check if the body's center is inside the box
+        return (
+            x > this.boxDimensions.x &&
+            x < this.boxDimensions.x + this.boxDimensions.width &&
+            y > this.boxDimensions.y &&
             y < this.boxDimensions.y + this.boxDimensions.height
         );
     }

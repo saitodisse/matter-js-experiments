@@ -31,6 +31,12 @@ class BallPoolSimulation {
     private bodyFactory: BodyFactory;
     private bodyWrapper: BodyWrapper;
     private gameManager: GameManager;
+    
+    // Game components
+    private boundaryWalls: BoundaryWalls;
+    private boundaryBox: BoundaryBox;
+    private initialShapes: InitialShapes;
+    private inputHandler: InputHandler;
 
     /**
      * BallPoolSimulation constructor
@@ -38,6 +44,14 @@ class BallPoolSimulation {
      * Initializes all components of the simulation and sets up the environment.
      */
     constructor() {
+        // Initialize the game
+        this.initializeGame();
+    }
+    
+    /**
+     * Initializes all game components
+     */
+    private initializeGame(): void {
         // Create the physics engine with renderer
         this.engine = new Engine({
             element: document.body,          // Attach to document body
@@ -59,26 +73,35 @@ class BallPoolSimulation {
 
         // Initialize the game manager (singleton)
         this.gameManager = GameManager.getInstance();
+        
+        // Set engine reference in game manager
+        this.gameManager.setEngine(this.engine);
+        
+        // Set restart callback in game manager
+        this.gameManager.setRestartCallback(() => this.restartGame());
 
         // Create boundary walls around the entire screen
-        new BoundaryWalls(
+        this.boundaryWalls = new BoundaryWalls(
             this.engine,
             window.innerWidth,
             window.innerHeight,
         );
 
         // Create U-shaped boundary box in the middle of the screen
-        new BoundaryBox(
+        this.boundaryBox = new BoundaryBox(
             this.engine,
             window.innerWidth,
             window.innerHeight,
         );
 
         // Create initial shapes to populate the simulation
-        new InitialShapes(this.engine);
+        this.initialShapes = new InitialShapes(this.engine);
+        
+        // Count initial non-static bodies and set in game manager
+        this.countAndSetInitialBodies();
 
         // Create input handler to manage user interactions
-        new InputHandler(
+        this.inputHandler = new InputHandler(
             this.engine,
             this.bodyFactory,
             this.debugControl,
@@ -99,6 +122,50 @@ class BallPoolSimulation {
             min: { x: 0, y: 0 },
             max: { x: window.innerWidth, y: window.innerHeight },
         });
+    }
+    
+    /**
+     * Counts the initial non-static bodies and sets the count in the game manager
+     */
+    private countAndSetInitialBodies(): void {
+        // Get all non-static bodies
+        const nonStaticBodies = this.engine.getAllBodies().filter(body => !body.isStatic);
+        
+        // Set the initial count in the game manager
+        this.gameManager.setInitialBodyCount(nonStaticBodies.length);
+    }
+    
+    /**
+     * Restarts the game by clearing all bodies and reinitializing
+     */
+    private restartGame(): void {
+        console.log("Restarting game...");
+        
+        // Clear all bodies from the world
+        const allBodies = this.engine.getAllBodies();
+        Matter.Composite.clear(this.engine.getWorld(), false, true);
+        
+        // Re-create the boundary walls
+        this.boundaryWalls = new BoundaryWalls(
+            this.engine,
+            window.innerWidth,
+            window.innerHeight,
+        );
+        
+        // Re-create the boundary box
+        this.boundaryBox = new BoundaryBox(
+            this.engine,
+            window.innerWidth,
+            window.innerHeight,
+        );
+        
+        // Re-create the initial shapes
+        this.initialShapes = new InitialShapes(this.engine);
+        
+        // Count and set the initial bodies again
+        this.countAndSetInitialBodies();
+        
+        console.log("Game restarted successfully!");
     }
 
     /**
