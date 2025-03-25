@@ -1,0 +1,43 @@
+body {
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+    overflow: hidden;
+    /* Prevent scrollbars */
+}
+
+.debug-control {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.debug-control label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+canvas {
+    display: block;
+    /* Important for removing extra space below canvas */
+    border: 2px solid #111;
+    /* Added border */
+    box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+    /* Added shadow */
+    border-radius: 8px;
+    /* Added border radius */
+    width: 100vw;
+    /* Make canvas width 100% of viewport width */
+    height: 100vh;
+    /* Make canvas height 100% of viewport height */
+}

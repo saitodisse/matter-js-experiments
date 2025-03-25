@@ -1,0 +1,25 @@
+{
+  "name": "experimento-04-matter",
+  "version": "1.0.0",
+  "description": "Matter.js Ball Pool with Vite",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "matter-js",
+    "physics",
+    "simulation"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/matter-js": "^0.19.8",
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "matter-js": "^0.20.0"
+  }
+}
