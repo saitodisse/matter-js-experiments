@@ -4,10 +4,14 @@ export class DebugControl {
     private element: HTMLDivElement;
     private checkbox: HTMLInputElement;
     private render: Matter.Render;
+    private engine: Matter.Engine;
     private isDebugMode: boolean;
     private onChangeCallbacks: ((isDebugMode: boolean) => void)[] = [];
+    private mouse: Matter.Mouse;
+    private mouseConstraint: Matter.MouseConstraint;
 
-    constructor(render: Matter.Render) {
+    constructor(engine: Matter.Engine, render: Matter.Render) {
+        this.engine = engine;
         this.render = render;
         this.isDebugMode = localStorage.getItem("debugMode") === "true";
 
@@ -41,6 +45,42 @@ export class DebugControl {
         // Update render options
         this.render.options.showAngleIndicator = this.isDebugMode;
         this.render.options.wireframes = this.isDebugMode;
+        this.render.options.showDebug = this.isDebugMode;
+        this.render.options.showCollisions = this.isDebugMode;
+        this.render.options.showPositions = this.isDebugMode;
+        this.render.options.showVelocity = this.isDebugMode;
+
+        // add mouse control
+        if (this.isDebugMode) {
+            // Create mouse and mouse constraint
+            this.mouse = Matter.Mouse.create(this.render.canvas);
+            this.mouseConstraint = Matter.MouseConstraint.create(this.engine, {
+                mouse: this.mouse,
+                constraint: {
+                    stiffness: 0.2,
+                    render: {
+                        visible: true,
+                    },
+                },
+            });
+
+            // Add mouse constraint to world
+            Matter.Composite.add(this.engine.world, this.mouseConstraint);
+
+            // Set mouse in render
+            this.render.mouse = this.mouse;
+        } else {
+            // Remove mouse constraint from world
+            if (this.mouseConstraint) {
+                Matter.Composite.remove(
+                    this.engine.world,
+                    this.mouseConstraint,
+                );
+            }
+
+            // Remove mouse from render
+            // this.render.mouse = undefined;
+        }
 
         // Save to localStorage
         localStorage.setItem("debugMode", String(this.isDebugMode));

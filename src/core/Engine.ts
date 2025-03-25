@@ -29,24 +29,6 @@ export class Engine {
 
         // Create runner
         this.runner = Matter.Runner.create();
-
-        // Create mouse and mouse constraint
-        this.mouse = Matter.Mouse.create(this.render.canvas);
-        this.mouseConstraint = Matter.MouseConstraint.create(this.engine, {
-            mouse: this.mouse,
-            constraint: {
-                stiffness: 0.2,
-                render: {
-                    visible: true,
-                },
-            },
-        });
-
-        // Add mouse constraint to world
-        Matter.Composite.add(this.world, this.mouseConstraint);
-
-        // Set mouse in render
-        this.render.mouse = this.mouse;
     }
 
     public start(): void {

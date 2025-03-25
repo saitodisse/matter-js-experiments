@@ -29,7 +29,10 @@ class BallPoolSimulation {
         });
 
         // Create debug control
-        this.debugControl = new DebugControl(this.engine.getRender());
+        this.debugControl = new DebugControl(
+            this.engine.getEngine(),
+            this.engine.getRender(),
+        );
 
         // Create body factory
         this.bodyFactory = new BodyFactory(this.debugControl);

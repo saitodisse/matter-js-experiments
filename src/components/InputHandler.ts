@@ -218,15 +218,15 @@ export class InputHandler {
             if (button === "Left" && event.ctrlKey) {
                 const currentTime = Date.now();
                 if (
-                    !window.lastCreationTime ||
-                    currentTime - window.lastCreationTime >= 100
+                    !(window as any).lastCreationTime ||
+                    currentTime - (window as any).lastCreationTime >= 100
                 ) {
                     const randomBody = this.bodyFactory.createRandomBody(
                         event.clientX,
                         event.clientY,
                     );
                     this.engine.addBody(randomBody);
-                    window.lastCreationTime = currentTime;
+                    (window as any).lastCreationTime = currentTime;
                 }
             }
         }
