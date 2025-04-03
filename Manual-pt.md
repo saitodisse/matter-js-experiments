@@ -522,7 +522,7 @@ private constructor() {
 
 5.  **Mostra a Tela de "Game Over":**
 
-    - Ele encontra os elementos da tela de fim de jogo no HTML (`game-over-modal`, `final-score`, `final-attempts`, `restart-button`).
+    - Ele encontra os elementos da tela de fim de jogo no HTML (`game-over-modal`, `final-score`, `restart-button`).
     - Quando o jogo acaba, ele chama `showGameOverModal()`, que atualiza as informações finais (pontuação, tentativas, talvez uma porcentagem de acerto) e torna essa tela visível.
 
 6.  **Sabe Como Reiniciar o Jogo:**

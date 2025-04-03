@@ -56,8 +56,7 @@ canvas {
     user-select: none;
 }
 
-#score-display,
-#attempts-display {
+#score-display {
     padding: 10px 20px;
     background-color: rgba(0, 0, 0, 0.7);
     color: white;
@@ -92,26 +91,21 @@ canvas {
 }
 
 .modal-content h2 {
-    font-size: 32px;
-    margin-bottom: 20px;
-    color: #333;
+    font-size: 20px;
+    margin: 10px 20px;
+    color: #626262;
 }
 
 .congrats-message {
-    font-size: 18px;
-    margin-bottom: 20px;
+    font-size: 14px;
+    margin: 10px 20px;
     color: #555;
 }
 
-#final-score,
-#final-attempts {
-    font-size: 20px;
-    margin-bottom: 10px;
+#final-score {
+    font-size: 23px;
+    margin-bottom: 27px;
     font-weight: bold;
-}
-
-#final-attempts {
-    margin-bottom: 30px;
 }
 
 #restart-button {

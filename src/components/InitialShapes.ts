@@ -74,7 +74,17 @@ export class InitialShapes {
       let isSafe: boolean;
       const padding = shapeRadius + 10; // Padding from screen edges
 
+      let maxCounter = 0;
+
       do {
+        maxCounter++;
+
+        if (maxCounter > 100) {
+          throw new Error(
+            `generateSafePosition cannot place new object. Try to make window bigger.`
+          );
+        }
+
         // Generate random position within screen bounds (with padding)
         x = Math.random() * (screenWidth - 2 * padding) + padding;
         y = Math.random() * (screenHeight - 2 * padding) + padding;
@@ -96,10 +106,8 @@ export class InitialShapes {
           y,
           boxBounds,
           safeDistance,
-          exclusionZone: {
-            exclusionZoneMinX,
-            exclusionZoneMaxX,
-          },
+          exclusionZoneMinX,
+          exclusionZoneMaxX,
           isHorizontallyUnsafe,
           isUnsafe,
         });
