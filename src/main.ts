@@ -1,6 +1,6 @@
 /**
  * main.ts
- * 
+ *
  * This is the entry point of the application. It creates and initializes the physics
  * simulation, sets up all necessary components, and starts the animation loop.
  */
@@ -19,176 +19,183 @@ import Matter from "matter-js";
 
 /**
  * BallPoolSimulation Class
- * 
+ *
  * The main class that orchestrates the entire physics simulation.
  * It initializes all components, sets up the environment, and manages
  * the simulation lifecycle.
  */
 class BallPoolSimulation {
-    // Core components
-    private engine: Engine;
-    private debugControl: DebugControl;
-    private bodyFactory: BodyFactory;
-    private bodyWrapper: BodyWrapper;
-    private gameManager: GameManager;
-    
-    // Game components
-    private boundaryWalls: BoundaryWalls;
-    private boundaryBox: BoundaryBox;
-    private initialShapes: InitialShapes;
-    private inputHandler: InputHandler;
-    /**
-     * BallPoolSimulation constructor
-     * 
-     * Initializes all components of the simulation and sets up the environment.
-     */
-    constructor() {
-        // Initialize the game
-        this.initializeGame();
-    }
-    
-    /**
-     * Initializes all game components
-     */
-    private initializeGame(): void {
-        // Create the physics engine with renderer
-        this.engine = new Engine({
-            element: document.body,          // Attach to document body
-            width: window.innerWidth,        // Full window width
-            height: window.innerHeight,      // Full window height
-            showAngleIndicator: false,       // Hide angle indicators by default
-            background: "#F0F0F0",           // Light gray background
-            wireframes: false,               // Solid rendering (not wireframe)
-        });
+  // Core components
+  private engine: Engine;
+  private debugControl: DebugControl;
+  private bodyFactory: BodyFactory;
+  private bodyWrapper: BodyWrapper;
+  private gameManager: GameManager;
 
-        // Create debug control for toggling debug features
-        this.debugControl = new DebugControl(
-            this.engine.getEngine(),
-            this.engine.getRender(),
-        );
+  // Game components
+  private boundaryWalls: BoundaryWalls;
+  private boundaryBox: BoundaryBox;
+  private initialShapes: InitialShapes;
+  private inputHandler: InputHandler;
+  /**
+   * BallPoolSimulation constructor
+   *
+   * Initializes all components of the simulation and sets up the environment.
+   */
+  constructor() {
+    // Initialize the game
+    this.initializeGame();
+  }
 
-        // Create body factory for generating physics bodies
-        this.bodyFactory = new BodyFactory(this.debugControl);
+  /**
+   * Initializes all game components
+   */
+  private initializeGame(): void {
+    // Create the physics engine with renderer
+    this.engine = new Engine({
+      element: document.body, // Attach to document body
+      width: window.innerWidth, // Full window width
+      height: window.innerHeight, // Full window height
+      showAngleIndicator: false, // Hide angle indicators by default
+      background: "#F0F0F0", // Light gray background
+      wireframes: false, // Solid rendering (not wireframe)
+    });
 
-        // Initialize the game manager (singleton)
-        this.gameManager = GameManager.getInstance();
-        
-        // Set engine reference in game manager
-        this.gameManager.setEngine(this.engine);
-        
-        // Set restart callback in game manager
-        this.gameManager.setRestartCallback(() => this.restartGame());
-        // Note: BoundaryWalls, BoundaryBox, InitialShapes, and countAndSetInitialBodies
-        // are now created/called within restartGame()
-        // Create input handler to manage user interactions
-        this.inputHandler = new InputHandler(
-            this.engine,
-            this.bodyFactory,
-            this.debugControl,
-        );
+    // Create debug control for toggling debug features
+    this.debugControl = new DebugControl(
+      this.engine.getEngine(),
+      this.engine.getRender()
+    );
 
-        // Create body wrapper for screen wrapping effect
-        // Note: The bounds extend beyond the screen to ensure smooth wrapping
-        this.bodyWrapper = new BodyWrapper({
-            min: { x: -100, y: 0 },                     // Extend left boundary
-            max: { x: window.innerWidth + 100, y: window.innerHeight }, // Extend right boundary
-        });
+    // Create body factory for generating physics bodies
+    this.bodyFactory = new BodyFactory(this.debugControl);
 
-        // Set up the screen wrapping functionality
-        this.setupBodyWrapping();
+    // Initialize the game manager (singleton)
+    this.gameManager = GameManager.getInstance();
 
-        // Set the viewport to show the entire screen
-        this.engine.lookAt({
-            min: { x: 0, y: 0 },
-            max: { x: window.innerWidth, y: window.innerHeight },
-        });
+    // Set engine reference in game manager
+    this.gameManager.setEngine(this.engine);
 
-        // Call restartGame initially to set up walls, box, and shapes
-        this.restartGame();
-    }
-    
-    /**
-     * Counts the initial non-static bodies and sets the count in the game manager
-     */
-    private countAndSetInitialBodies(): void {
-        // Get all non-static bodies
-        const nonStaticBodies = this.engine.getAllBodies().filter(body => !body.isStatic);
-        
-        // Set the initial count in the game manager
-        this.gameManager.setInitialBodyCount(nonStaticBodies.length);
-    }
-    
-    /**
-     * Restarts the game by clearing all bodies and reinitializing
-     */
-    private restartGame(): void {
-        console.log("Restarting game...");
-        
-        // Clear all bodies from the world (except static ones like the outer walls if they existed)
-        // It's safer to remove specific bodies if needed, but clearing non-static is typical for restart.
-        // Let's clear everything for simplicity, as walls/box are recreated anyway.
-        Matter.Composite.clear(this.engine.getWorld(), false); // Keep static property false to remove everything
+    // Set restart callback in game manager
+    this.gameManager.setRestartCallback(() => this.restartGame());
+    // Note: BoundaryWalls, BoundaryBox, InitialShapes, and countAndSetInitialBodies
+    // are now created/called within restartGame()
+    // Create input handler to manage user interactions
+    this.inputHandler = new InputHandler(
+      this.engine,
+      this.bodyFactory,
+      this.debugControl
+    );
 
-        // Re-create the boundary walls
-        this.boundaryWalls = new BoundaryWalls(
-            this.engine,
-            window.innerWidth,
-            window.innerHeight,
-        );
-        
-        // Re-create the boundary box
-        this.boundaryBox = new BoundaryBox(
-            this.engine,
-            window.innerWidth,
-            window.innerHeight,
-        );
-        
-        // Re-create the initial shapes
-        this.initialShapes = new InitialShapes(this.engine, this.boundaryBox); // Pass boundaryBox
-        
-        // Count and set the initial bodies again
-        this.countAndSetInitialBodies();
-    }
+    // Create body wrapper for screen wrapping effect
+    // Note: The bounds extend beyond the screen to ensure smooth wrapping
+    this.bodyWrapper = new BodyWrapper({
+      min: { x: -100, y: 0 }, // Extend left boundary
+      max: { x: window.innerWidth + 100, y: window.innerHeight }, // Extend right boundary
+    });
 
-    /**
-     * Sets up the screen wrapping functionality for all bodies
-     * 
-     * This method adds an event listener to the physics engine that
-     * wraps bodies around the screen edges before each physics update.
-     */
-    private setupBodyWrapping(): void {
-        // Add event listener to the 'beforeUpdate' event
-        Matter.Events.on(this.engine.getEngine(), "beforeUpdate", () => {
-            // Get all bodies in the simulation
-            const allBodies = this.engine.getAllBodies();
-            // Apply wrapping to each body
-            for (const body of allBodies) {
-                this.bodyWrapper.wrapBody(body);
-            }
-        });
-    }
+    // Set up the screen wrapping functionality
+    this.setupBodyWrapping();
 
-    /**
-     * Starts the physics simulation
-     * 
-     * This method starts both the renderer and the physics engine.
-     */
-    public start(): void {
-        this.engine.start();
-    }
+    // Set the viewport to show the entire screen
+    this.engine.lookAt({
+      min: { x: 0, y: 0 },
+      max: { x: window.innerWidth, y: window.innerHeight },
+    });
 
-    /**
-     * Stops the physics simulation
-     * 
-     * This method stops both the renderer and the physics engine.
-     */
-    public stop(): void {
-        this.engine.stop();
-    }
+    // Call restartGame initially to set up walls, box, and shapes
+    this.restartGame();
+  }
+
+  /**
+   * Counts the initial non-static bodies and sets the count in the game manager
+   */
+  private countAndSetInitialBodies(): void {
+    // Get all non-static bodies
+    const nonStaticBodies = this.engine
+      .getAllBodies()
+      .filter((body) => !body.isStatic);
+
+    // Set the initial count in the game manager
+    this.gameManager.setInitialBodyCount(nonStaticBodies.length);
+  }
+
+  /**
+   * Restarts the game by clearing all bodies and reinitializing
+   */
+  private restartGame(): void {
+    console.log("Restarting game...");
+
+    // Clear all bodies from the world (except static ones like the outer walls if they existed)
+    // It's safer to remove specific bodies if needed, but clearing non-static is typical for restart.
+    // Let's clear everything for simplicity, as walls/box are recreated anyway.
+    Matter.Composite.clear(this.engine.getWorld(), false); // Keep static property false to remove everything
+
+    // Re-create the boundary walls
+    this.boundaryWalls = new BoundaryWalls(
+      this.engine,
+      window.innerWidth,
+      window.innerHeight
+    );
+
+    // Re-create the boundary box
+    this.boundaryBox = new BoundaryBox(
+      this.engine,
+      window.innerWidth,
+      window.innerHeight
+    );
+
+    // Re-create the initial shapes
+    this.initialShapes = new InitialShapes({
+      engine: this.engine,
+      boundaryBox: this.boundaryBox,
+      bodyFactory: this.bodyFactory,
+      debugControl: this.debugControl,
+    }); // Pass boundaryBox
+
+    // Count and set the initial bodies again
+    this.countAndSetInitialBodies();
+  }
+
+  /**
+   * Sets up the screen wrapping functionality for all bodies
+   *
+   * This method adds an event listener to the physics engine that
+   * wraps bodies around the screen edges before each physics update.
+   */
+  private setupBodyWrapping(): void {
+    // Add event listener to the 'beforeUpdate' event
+    Matter.Events.on(this.engine.getEngine(), "beforeUpdate", () => {
+      // Get all bodies in the simulation
+      const allBodies = this.engine.getAllBodies();
+      // Apply wrapping to each body
+      for (const body of allBodies) {
+        this.bodyWrapper.wrapBody(body);
+      }
+    });
+  }
+
+  /**
+   * Starts the physics simulation
+   *
+   * This method starts both the renderer and the physics engine.
+   */
+  public start(): void {
+    this.engine.start();
+  }
+
+  /**
+   * Stops the physics simulation
+   *
+   * This method stops both the renderer and the physics engine.
+   */
+  public stop(): void {
+    this.engine.stop();
+  }
 }
 
 // Initialize and start the simulation when the window loads
 window.onload = function () {
-    const simulation = new BallPoolSimulation();
-    simulation.start();
+  const simulation = new BallPoolSimulation();
+  simulation.start();
 };
