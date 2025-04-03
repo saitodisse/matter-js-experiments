@@ -8,7 +8,7 @@
 import Matter from "matter-js";
 import { Engine } from "../core/Engine";
 import { GameManager } from "../core/GameManager";
-
+import { Bounds } from "matter-js";
 /**
  * BoundaryBox Class
  *
@@ -26,12 +26,9 @@ export class BoundaryBox {
     // Height of the canvas/screen
     private height: number;
     // Box dimensions and position
-    private boxDimensions: {
-        x: number;
-        y: number;
-        width: number;
-        height: number;
-    };
+    // Box dimensions and calculated bounds
+    private boxDimensions: { width: number; height: number };
+    private boxBounds: Bounds; // Use Matter.js Bounds type
     // Reference to the game manager
     private gameManager: GameManager;
 
@@ -47,9 +44,17 @@ export class BoundaryBox {
         this.width = width;
         this.height = height;
         this.gameManager = GameManager.getInstance();
-        this.createBoxParts();
-        this.setupCollisionDetection();
+        this.createBoxParts(); // This will now calculate random position
+        // this.setupCollisionDetection(); // Remove this - rely on handleCollision
         this.handleCollision();
+    }
+
+    /**
+     * Returns the calculated bounds of the box.
+     * @returns The bounds object { min: { x, y }, max: { x, y } }
+     */
+    public getBounds(): Bounds {
+        return this.boxBounds;
     }
 
     /**
@@ -60,19 +65,30 @@ export class BoundaryBox {
      */
     private createBoxParts(): void {
         // Define fixed dimensions for the box
-        const BoxA_width = 180;
-        const BoxA_height = 140;
+        const boxWidth = 180;
+        const boxHeight = 140;
+        this.boxDimensions = { width: boxWidth, height: boxHeight }; // Store fixed dimensions
 
-        // Calculate position for the box (near the bottom-right corner of the screen)
-        const BoxA_x_position = this.width - (50.5 / 1.2 + BoxA_width / 2);
-        const BoxA_y_position = this.height - (50.5 / 1.2 + BoxA_height / 2);
+        // --- Random Position Calculation ---
+        const padding = 60; // Min distance from screen edges and boundary walls thickness
+        const minX = padding + boxWidth / 2;
+        const maxX = this.width - padding - boxWidth / 2;
+        const minY = padding + boxHeight / 2; // Allow placement near top
+        const maxY = this.height - padding - boxHeight / 2;
+
+        // Ensure valid range before calculating random position
+        const randomX = maxX > minX ? Matter.Common.random(minX, maxX) : this.width / 2;
+        const randomY = maxY > minY ? Matter.Common.random(minY, maxY) : this.height / 2;
+
+        const boxCenterX = randomX;
+        const boxCenterY = randomY;
+        // --- End Random Position Calculation ---
 
         // Store box dimensions for collision detection
-        this.boxDimensions = {
-            x: BoxA_x_position - BoxA_width / 2,
-            y: BoxA_y_position - BoxA_height / 2,
-            width: BoxA_width,
-            height: BoxA_height,
+        // Store calculated bounds for collision detection and external access
+        this.boxBounds = {
+            min: { x: boxCenterX - boxWidth / 2, y: boxCenterY - boxHeight / 2 },
+            max: { x: boxCenterX + boxWidth / 2, y: boxCenterY + boxHeight / 2 },
         };
 
         // Log box dimensions and position for debugging
@@ -81,19 +97,21 @@ export class BoundaryBox {
             {
                 width: this.width,
                 height: this.height,
-                BoxA_x_position,
-                BoxA_y_position,
-                BoxA_width,
-                BoxA_height,
-            },
+                boxCenterX,
+                boxCenterY,
+                boxWidth,
+                boxHeight,
+                bounds: this.boxBounds
+            }
         );
 
         // Create the bottom wall of the box
+        // Create the bottom wall of the box using calculated center and dimensions
         const bottomBox = Matter.Bodies.rectangle(
-            BoxA_x_position, // X position (center of the bottom wall)
-            BoxA_y_position + BoxA_height / 2, // Y position (bottom of the box)
-            BoxA_width, // Width (same as box width)
-            2, // Height (thin wall)
+            boxCenterX, // X position (center of the bottom wall)
+            boxCenterY + boxHeight / 2, // Y position (bottom edge of the box)
+            boxWidth, // Width (same as box width)
+            10, // Height (thickness of the wall) - increased thickness slightly
             {
                 isStatic: true, // Make it a static body (doesn't move)
                 render: {
@@ -105,11 +123,12 @@ export class BoundaryBox {
         );
 
         // Create the left wall of the box
+        // Create the left wall of the box
         const leftBox = Matter.Bodies.rectangle(
-            BoxA_x_position - BoxA_width / 2, // X position (left edge of the box)
-            BoxA_y_position, // Y position (center of the left wall)
-            2, // Width (thin wall)
-            BoxA_height, // Height (same as box height)
+            boxCenterX - boxWidth / 2, // X position (left edge of the box)
+            boxCenterY, // Y position (center of the left wall)
+            10, // Width (thickness of the wall)
+            boxHeight, // Height (same as box height)
             {
                 isStatic: true, // Make it a static body
                 render: {
@@ -121,11 +140,12 @@ export class BoundaryBox {
         );
 
         // Create the right wall of the box
+        // Create the right wall of the box
         const rightBox = Matter.Bodies.rectangle(
-            BoxA_x_position + BoxA_width / 2, // X position (right edge of the box)
-            BoxA_y_position, // Y position (center of the right wall)
-            2, // Width (thin wall)
-            BoxA_height, // Height (same as box height)
+            boxCenterX + boxWidth / 2, // X position (right edge of the box)
+            boxCenterY, // Y position (center of the right wall)
+            10, // Width (thickness of the wall)
+            boxHeight, // Height (same as box height)
             {
                 isStatic: true, // Make it a static body
                 render: {
@@ -143,16 +163,8 @@ export class BoundaryBox {
         this.engine.addBody(this.boxParts);
     }
 
-    /**
-     * Sets up collision detection for bodies entering the box
-     */
-    private setupCollisionDetection(): void {
-        // Check for bodies inside the box on each update
-        Matter.Events.on(this.engine.getEngine(), "afterUpdate", () => {
-            this.checkBodiesInBox();
-        });
-    }
-
+    // Removed setupCollisionDetection and checkBodiesInBox methods
+    // Collision is handled by handleCollision using 'collisionStart' event
     /**
      * Handles collision events with the box
      * 
@@ -192,78 +204,28 @@ export class BoundaryBox {
                 }
 
                 // Check if the body is inside the box
-                if (this.isBodyInsideBox(otherBody)) {
+                // Check if the other body's center is within the box bounds
+                if (Matter.Bounds.contains(this.boxBounds, otherBody.position)) {
+                     // Log the event for debugging
+                    console.log(
+                        `Body ${otherBody.id} entered the box via collision!`,
+                    );
                     // Add a point to the score
                     gameManager.addScore();
-                    
+
                     // Remove the body from the world
-                    Matter.Composite.remove(this.engine.getWorld(), otherBody);
-                    
-                    // Check if the game is over after removing the body
-                    gameManager.checkGameOver();
+                    // Use setTimeout to avoid issues with modifying composite during collision event
+                    setTimeout(() => {
+                        Matter.Composite.remove(this.engine.getWorld(), otherBody);
+                        // Check if the game is over after removing the body
+                         gameManager.checkGameOver();
+                    }, 0);
                 }
             }
         });
     }
 
-    /**
-     * Checks if any bodies are inside the box and handles them
-     */
-    private checkBodiesInBox(): void {
-        // Get all bodies in the simulation
-        const allBodies = this.engine.getAllBodies();
-
-        // Filter out static bodies (like walls) and check if any are inside the box
-        const bodiesToCheck = allBodies.filter((body) => !body.isStatic);
-
-        for (const body of bodiesToCheck) {
-            // Check if the body's center is inside the box
-            if (this.isBodyInBox(body)) {
-                // Remove the body from the simulation
-                this.engine.removeBody(body);
-
-                // Increment the score using the game manager
-                this.gameManager.addScore();
-
-                // Log the event for debugging
-                console.log(
-                    `Body ${body.id} entered the box!`,
-                );
-            }
-        }
-    }
-
-    /**
-     * Checks if a body is inside the box
-     *
-     * @param body - The body to check
-     * @returns True if the body is inside the box, false otherwise
-     */
-    private isBodyInBox(body: Matter.Body): boolean {
-        // Get the body's position
-        const { x, y } = body.position;
-
-        // Check if the body's center is inside the box
-        return (
-            x > this.boxDimensions.x &&
-            x < this.boxDimensions.x + this.boxDimensions.width &&
-            y > this.boxDimensions.y + 85 &&
-            y < this.boxDimensions.y + this.boxDimensions.height
-        );
-    }
-
-    private isBodyInsideBox(body: Matter.Body): boolean {
-        // Get the body's position
-        const { x, y } = body.position;
-
-        // Check if the body's center is inside the box
-        return (
-            x > this.boxDimensions.x &&
-            x < this.boxDimensions.x + this.boxDimensions.width &&
-            y > this.boxDimensions.y &&
-            y < this.boxDimensions.y + this.boxDimensions.height
-        );
-    }
+    // Removed checkBodiesInBox, isBodyInBox and isBodyInsideBox methods
 
     /**
      * Returns all box parts (walls)
@@ -274,22 +236,5 @@ export class BoundaryBox {
         return this.boxParts;
     }
 
-    /**
-     * Resizes the box when the canvas/screen size changes
-     *
-     * @param width - New width of the canvas/screen
-     * @param height - New height of the canvas/screen
-     */
-    public resize(width: number, height: number): void {
-        this.width = width;
-        this.height = height;
-
-        // Remove old box parts from the physics engine
-        for (const box of this.boxParts) {
-            this.engine.removeBody(box);
-        }
-
-        // Create new box parts with updated dimensions
-        this.createBoxParts();
-    }
+    // Removed resize method - conflicts with random positioning
 }

@@ -95,7 +95,7 @@ class BallPoolSimulation {
         );
 
         // Create initial shapes to populate the simulation
-        this.initialShapes = new InitialShapes(this.engine);
+        this.initialShapes = new InitialShapes(this.engine, this.boundaryBox); // Pass boundaryBox
         
         // Count initial non-static bodies and set in game manager
         this.countAndSetInitialBodies();
@@ -160,7 +160,7 @@ class BallPoolSimulation {
         );
         
         // Re-create the initial shapes
-        this.initialShapes = new InitialShapes(this.engine);
+        this.initialShapes = new InitialShapes(this.engine, this.boundaryBox); // Pass boundaryBox
         
         // Count and set the initial bodies again
         this.countAndSetInitialBodies();
