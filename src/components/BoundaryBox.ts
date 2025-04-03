@@ -211,12 +211,9 @@ export class BoundaryBox {
                     console.log(
                         `Body ${otherBody.id} entered the box via collision!`,
                     );
-                    // Add a point to the score ONLY if not in the initial settling phase
-                    if (!gameManager.isSettling()) {
-                         gameManager.addScore();
-                    } else {
-                         console.log(`Score for body ${otherBody.id} ignored during settling.`);
-                    }
+                    // Call GameManager to handle scoring. It will decide whether to
+                    // add score or restart based on attempts and settling state.
+                    gameManager.addScore();
 
                     // Remove the body from the world
                     // Use setTimeout to avoid issues with modifying composite during collision event

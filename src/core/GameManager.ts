@@ -44,8 +44,8 @@ export class GameManager {
 
     // Callback for restarting the game
     private restartCallback: (() => void) | null = null;
-    // Flag to ignore score increases during initial settling phase
-    private isInitialSettling: boolean = false;
+    // Flag to track if the first user attempt has been made
+    private firstAttemptMade: boolean = false;
     /**
      * Private constructor to enforce singleton pattern
      */
@@ -173,18 +173,14 @@ export class GameManager {
      * @param points - Number of points to add (default: 1)
      */
     public addScore(points: number = 1): void {
-        // If score is added before any attempts, restart the game.
-        if (this.attempts === 0) {
+        // 1. If score occurs before the first attempt, restart.
+        if (!this.firstAttemptMade) {
             console.log("Score added before first attempt. Restarting game.");
-            this.restartGame(); // Use restartGame to handle UI and callback
-            return; // Stop further execution in this method call
-        }
-
-        // Ignore score increases during the initial settling phase (existing logic)
-        if (this.isInitialSettling) {
-            console.log("Score ignored during initial settling phase.");
+            this.restartGame();
             return;
         }
+
+        // 3. If the first attempt has been made AND we are not settling, add the score.
         this.score += points;
         this.updateScoreDisplay();
         console.log(`Score increased! Current score: ${this.score}`);
@@ -199,6 +195,11 @@ export class GameManager {
      * @param count - Number of attempts to add (default: 1)
      */
     public addAttempt(count: number = 1): void {
+        // Mark that the first attempt has been made, if not already
+        if (!this.firstAttemptMade) {
+            this.firstAttemptMade = true;
+            console.log("First attempt registered.");
+        }
         this.attempts += count;
         this.updateAttemptsDisplay();
         console.log(`Attempt made! Total attempts: ${this.attempts}`);
@@ -285,23 +286,6 @@ export class GameManager {
         this.resetScore();
         this.resetAttempts();
         this.isGameOver = false;
-        this.isInitialSettling = true; // Start in settling phase on reset
-    }
-
-    /**
-     * Marks the initial settling phase as complete.
-     * Score increases will now be counted.
-     */
-    public completeInitialSettling(): void {
-        this.isInitialSettling = false;
-        console.log("Initial settling complete. Score counting enabled.");
-    }
-
-    /**
-     * Checks if the game is currently in the initial settling phase.
-     * @returns True if in settling phase, false otherwise.
-     */
-    public isSettling(): boolean {
-        return this.isInitialSettling;
+        this.firstAttemptMade = false; // Reset first attempt flag
     }
 }

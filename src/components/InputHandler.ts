@@ -225,15 +225,16 @@ export class InputHandler {
                 distance * 0.015,
             );
 
+            // Increment the attempts counter BEFORE applying force
+            // This ensures the "first attempt" state is set before physics might cause scoring
+            this.gameManager.addAttempt();
+
             // Apply the force to the body
             Matter.Body.applyForce(
                 clickedBody,
                 clickedBody.position,
                 force,
             );
-            
-            // Increment the attempts counter in the game manager
-            this.gameManager.addAttempt();
 
             // Log the repelling action if debug mode is enabled
             this.debugControl.logEvent("Body Repelled", {

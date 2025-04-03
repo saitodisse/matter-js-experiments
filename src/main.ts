@@ -37,10 +37,6 @@ class BallPoolSimulation {
     private boundaryBox: BoundaryBox;
     private initialShapes: InitialShapes;
     private inputHandler: InputHandler;
-    // State for initial shape settling check
-    private initialCheckActive: boolean = false;
-    private initialCheckCounter: number = 0;
-    private readonly maxInitialCheckUpdates = 120; // Approx 2 seconds at 60fps
     /**
      * BallPoolSimulation constructor
      * 
@@ -152,15 +148,6 @@ class BallPoolSimulation {
         
         // Count and set the initial bodies again
         this.countAndSetInitialBodies();
-
-        // --- Start initial shape settling check ---
-        this.initialCheckActive = true;
-        this.initialCheckCounter = 0;
-
-        // The check for shapes settling in the box is now handled by the
-        // performInitialShapeCheck method attached to the 'afterUpdate' event listener above.
-
-        console.log("Game restarted successfully!");
     }
 
     /**
