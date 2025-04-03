@@ -73,15 +73,16 @@ export class BoundaryBox {
         const padding = 60; // Min distance from screen edges and boundary walls thickness
         const minX = padding + boxWidth / 2;
         const maxX = this.width - padding - boxWidth / 2;
-        const minY = padding + boxHeight / 2; // Allow placement near top
-        const maxY = this.height - padding - boxHeight / 2;
+        // const minY = padding + boxHeight / 2; // No longer needed for random Y
+        // const maxY = this.height - padding - boxHeight / 2; // No longer needed for random Y
 
         // Ensure valid range before calculating random position
-        const randomX = maxX > minX ? Matter.Common.random(minX, maxX) : this.width / 2;
-        const randomY = maxY > minY ? Matter.Common.random(minY, maxY) : this.height / 2;
+        const randomX = maxX > minX ? (Math.random() * (maxX - minX) + minX) : this.width / 2;
+        // const randomY = maxY > minY ? (Math.random() * (maxY - minY) + minY) : this.height / 2; // Remove random Y calculation
 
         const boxCenterX = randomX;
-        const boxCenterY = randomY;
+        const bottomPadding = 33; // Small padding from the bottom boundary wall
+        const boxCenterY = this.height - (boxHeight / 2) - bottomPadding; // Position near the bottom
         // --- End Random Position Calculation ---
 
         // Store box dimensions for collision detection
@@ -210,8 +211,12 @@ export class BoundaryBox {
                     console.log(
                         `Body ${otherBody.id} entered the box via collision!`,
                     );
-                    // Add a point to the score
-                    gameManager.addScore();
+                    // Add a point to the score ONLY if not in the initial settling phase
+                    if (!gameManager.isSettling()) {
+                         gameManager.addScore();
+                    } else {
+                         console.log(`Score for body ${otherBody.id} ignored during settling.`);
+                    }
 
                     // Remove the body from the world
                     // Use setTimeout to avoid issues with modifying composite during collision event

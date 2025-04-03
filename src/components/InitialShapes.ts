@@ -55,18 +55,24 @@ export class InitialShapes {
 
             do {
                 // Generate random position within screen bounds (with padding)
-                x = Matter.Common.random(padding, screenWidth - padding);
-                y = Matter.Common.random(padding, screenHeight - padding);
+                x = Math.random() * (screenWidth - 2 * padding) + padding;
+                y = Math.random() * (screenHeight - 2 * padding) + padding;
 
-                // Check distance from box bounds
-                const closestX = Math.max(boxBounds.min.x, Math.min(x, boxBounds.max.x));
-                const closestY = Math.max(boxBounds.min.y, Math.min(y, boxBounds.max.y));
-                const distanceX = x - closestX;
-                const distanceY = y - closestY;
-                const distanceSquared = (distanceX * distanceX) + (distanceY * distanceY);
+                // Define the horizontal and vertical exclusion zones around the box
+                const exclusionZoneMinX = boxBounds.min.x - safeDistance;
+                const exclusionZoneMaxX = boxBounds.max.x + safeDistance;
+                const exclusionZoneMinY = boxBounds.min.y - (safeDistance * 1.5); // Increased upward exclusion slightly more
+                const exclusionZoneMaxY = boxBounds.max.y + safeDistance;
 
-                // Check if outside the box's "safe zone" (box bounds + safeDistance)
-                isSafe = distanceSquared > (safeDistance * safeDistance);
+                // Check if the point falls within the combined exclusion zone
+                const isHorizontallyUnsafe = x >= exclusionZoneMinX && x <= exclusionZoneMaxX;
+                const isVerticallyUnsafe = y >= exclusionZoneMinY && y <= exclusionZoneMaxY;
+
+                // The position is unsafe ONLY if it's within BOTH the horizontal AND vertical exclusion zones
+                const isUnsafe = isHorizontallyUnsafe && isVerticallyUnsafe;
+
+                // isSafe is the opposite of isUnsafe
+                isSafe = !isUnsafe;
 
             } while (!isSafe); // Keep trying until a safe position is found
 
@@ -117,6 +123,7 @@ export class InitialShapes {
         this.shapes = [triangle, pentagon, rectangle];
         // Add all shapes to the physics engine
         this.engine.addBody(this.shapes);
+        // The check for shapes falling in immediately will happen after a delay in main.ts
     }
 
     /**

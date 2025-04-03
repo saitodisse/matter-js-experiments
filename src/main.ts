@@ -37,7 +37,10 @@ class BallPoolSimulation {
     private boundaryBox: BoundaryBox;
     private initialShapes: InitialShapes;
     private inputHandler: InputHandler;
-
+    // State for initial shape settling check
+    private initialCheckActive: boolean = false;
+    private initialCheckCounter: number = 0;
+    private readonly maxInitialCheckUpdates = 120; // Approx 2 seconds at 60fps
     /**
      * BallPoolSimulation constructor
      * 
@@ -79,27 +82,8 @@ class BallPoolSimulation {
         
         // Set restart callback in game manager
         this.gameManager.setRestartCallback(() => this.restartGame());
-
-        // Create boundary walls around the entire screen
-        this.boundaryWalls = new BoundaryWalls(
-            this.engine,
-            window.innerWidth,
-            window.innerHeight,
-        );
-
-        // Create U-shaped boundary box in the middle of the screen
-        this.boundaryBox = new BoundaryBox(
-            this.engine,
-            window.innerWidth,
-            window.innerHeight,
-        );
-
-        // Create initial shapes to populate the simulation
-        this.initialShapes = new InitialShapes(this.engine, this.boundaryBox); // Pass boundaryBox
-        
-        // Count initial non-static bodies and set in game manager
-        this.countAndSetInitialBodies();
-
+        // Note: BoundaryWalls, BoundaryBox, InitialShapes, and countAndSetInitialBodies
+        // are now created/called within restartGame()
         // Create input handler to manage user interactions
         this.inputHandler = new InputHandler(
             this.engine,
@@ -122,6 +106,9 @@ class BallPoolSimulation {
             min: { x: 0, y: 0 },
             max: { x: window.innerWidth, y: window.innerHeight },
         });
+
+        // Call restartGame initially to set up walls, box, and shapes
+        this.restartGame();
     }
     
     /**
@@ -141,10 +128,11 @@ class BallPoolSimulation {
     private restartGame(): void {
         console.log("Restarting game...");
         
-        // Clear all bodies from the world
-        const allBodies = this.engine.getAllBodies();
-        Matter.Composite.clear(this.engine.getWorld(), false, true);
-        
+        // Clear all bodies from the world (except static ones like the outer walls if they existed)
+        // It's safer to remove specific bodies if needed, but clearing non-static is typical for restart.
+        // Let's clear everything for simplicity, as walls/box are recreated anyway.
+        Matter.Composite.clear(this.engine.getWorld(), false); // Keep static property false to remove everything
+
         // Re-create the boundary walls
         this.boundaryWalls = new BoundaryWalls(
             this.engine,
@@ -164,7 +152,14 @@ class BallPoolSimulation {
         
         // Count and set the initial bodies again
         this.countAndSetInitialBodies();
-        
+
+        // --- Start initial shape settling check ---
+        this.initialCheckActive = true;
+        this.initialCheckCounter = 0;
+
+        // The check for shapes settling in the box is now handled by the
+        // performInitialShapeCheck method attached to the 'afterUpdate' event listener above.
+
         console.log("Game restarted successfully!");
     }
 
