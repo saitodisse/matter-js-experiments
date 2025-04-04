@@ -521,15 +521,14 @@ export class GameManager {
     this.hideGameOverModal();
 
     // Reset game state completely, including mode selection
-    this.resetGame(true); // Pass true to indicate full restart
+    this.resetGame(false); // Pass false to reset state without showing start modal
 
     // Call the engine restart callback if set
     if (this.restartCallback) {
       this.restartCallback();
     }
 
-    // Show the game start modal again for mode selection
-    this.showGameStartModal();
+    // No longer show the start modal on restart
   }
 
   /**
