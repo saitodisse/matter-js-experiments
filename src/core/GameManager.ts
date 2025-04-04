@@ -23,6 +23,7 @@ export class GameManager {
   // Game Mode
   private gameMode: GameMode = null;
   private currentPlayer: 1 | 2 = 1; // Relevant for two-player mode
+  private lastPlayerToAttempt: 1 | 2 = 1; // Track who made the last attempt
 
   // Player's score (number of objects collected) - Used for single player
   private score: number = 0;
@@ -277,7 +278,7 @@ export class GameManager {
   }
 
   /**
-   * Increments the score based on the current game mode and player
+   * Increments the score based on the current game mode and the player who made the last attempt
    *
    * @param points - Number of points to add (default: 1)
    */
@@ -296,7 +297,8 @@ export class GameManager {
       this.score += points;
       console.log(`Score increased! Current score: ${this.score}`);
     } else if (this.gameMode === "two") {
-      if (this.currentPlayer === 1) {
+      // Score is awarded to the player who made the last attempt
+      if (this.lastPlayerToAttempt === 1) {
         this.player1Score += points;
         console.log(
           `Player 1 score increased! Current score: ${this.player1Score}`,
@@ -314,7 +316,7 @@ export class GameManager {
   }
 
   /**
-   * Increments the number of attempts and switches player in two-player mode
+   * Increments the number of attempts, stores the attempting player, and switches player in two-player mode
    *
    * @param count - Number of attempts to add (default: 1)
    */
@@ -331,7 +333,12 @@ export class GameManager {
     if (this.gameMode === "single") {
       this.attempts += count;
       console.log(`Attempt made! Total attempts: ${this.attempts}`);
+      // In single player, the 'last player' is always player 1 conceptually
+      this.lastPlayerToAttempt = 1;
     } else if (this.gameMode === "two") {
+      // Store the player making the attempt *before* switching turns
+      this.lastPlayerToAttempt = this.currentPlayer;
+
       if (this.currentPlayer === 1) {
         this.player1Attempts += count;
         console.log(
@@ -452,6 +459,7 @@ export class GameManager {
     this.isGameOver = false;
     this.firstAttemptMade = false; // Reset first attempt flag
     this.currentPlayer = 1; // Reset to player 1
+    this.lastPlayerToAttempt = 1; // Reset last attempter
 
     if (fullRestart) {
       this.gameMode = null; // Reset mode only on full restart
