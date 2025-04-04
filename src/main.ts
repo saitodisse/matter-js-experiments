@@ -53,7 +53,10 @@ class BallPoolSimulation {
    * Initializes all game components
    */
   private initializeGame(): void {
-    // Create the physics engine with renderer
+    // Initialize the game manager (singleton) - Needs to happen before Engine if Engine needs AudioManager
+    this.gameManager = GameManager.getInstance();
+
+    // Create the physics engine with renderer, passing the AudioManager instance
     this.engine = new Engine({
       element: document.body, // Attach to document body
       width: window.innerWidth, // Full window width
@@ -61,6 +64,7 @@ class BallPoolSimulation {
       showAngleIndicator: false, // Hide angle indicators by default
       background: "#F0F0F0", // Light gray background
       wireframes: false, // Solid rendering (not wireframe)
+      audioManager: this.gameManager.getAudioManager(), // Pass AudioManager
     });
 
     // Create debug control for toggling debug features
@@ -72,11 +76,14 @@ class BallPoolSimulation {
     // Create body factory for generating physics bodies
     this.bodyFactory = new BodyFactory(this.debugControl);
 
-    // Initialize the game manager (singleton)
-    this.gameManager = GameManager.getInstance();
-
     // Set engine reference in game manager
     this.gameManager.setEngine(this.engine);
+
+    // Set DebugControl instance in GameManager (which will also set it in AudioManager)
+    this.gameManager.setDebugControl(this.debugControl);
+
+    // Set DebugControl instance in Engine
+    this.engine.setDebugControl(this.debugControl);
 
     // Set restart callback in game manager
     this.gameManager.setRestartCallback(() => this.restartGame());
@@ -132,7 +139,9 @@ class BallPoolSimulation {
    * Restarts the game by clearing all bodies and reinitializing
    */
   private restartGame(): void {
-    console.log("Restarting game...");
+    this.debugControl?.logEvent("GameRestart", {
+      message: "Restarting game...",
+    });
 
     // Clear all bodies from the world (except static ones like the outer walls if they existed)
     // It's safer to remove specific bodies if needed, but clearing non-static is typical for restart.
@@ -151,6 +160,7 @@ class BallPoolSimulation {
       this.engine,
       window.innerWidth,
       window.innerHeight,
+      this.debugControl, // Pass DebugControl
     );
 
     // Re-create the initial shapes

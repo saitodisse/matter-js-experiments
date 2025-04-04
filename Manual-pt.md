@@ -172,7 +172,7 @@ Se o `GameManager` decidir que é hora de reiniciar (talvez porque você apertou
 
 ```typescript
 private restartGame(): void {
-    console.log("Reiniciando o jogo..."); // Avisa no console que está reiniciando
+    // Avisa no console que está reiniciando (console.log removido)
 
     // 1. Tira todas as formas da tela
     Matter.Composite.clear(this.engine.getWorld(), false, true);
@@ -189,7 +189,7 @@ private restartGame(): void {
     // 5. Conta de novo quantas formas tem e avisa o GameManager
     this.countAndSetInitialBodies();
 
-    console.log("Jogo reiniciado!"); // Avisa que terminou
+    // Avisa que terminou (console.log removido)
 }
 ```
 
@@ -512,7 +512,7 @@ private constructor() {
 
          if (nonStaticBodies.length === 0 && this.initialBodyCount > 0) {
              this.isGameOver = true;
-             console.log("Game over! All bodies collected.");
+             // Exemplo: this.debugControl?.logEvent('GameState', { message: "Game over! All bodies collected." });
              this.showGameOverModal(); // Mostra a tela de fim de jogo
          }
      }

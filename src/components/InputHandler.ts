@@ -236,6 +236,22 @@ export class InputHandler {
                 distance * 0.015,
             );
 
+            this.debugControl.logEvent("Body Repelled", {
+                id: clickedBody.id,
+                clickedBody,
+                type: clickedBody.circleRadius
+                    ? "Circle"
+                    : clickedBody.vertices
+                    ? "Polygon"
+                    : "Rectangle",
+                position: {
+                    x: clickedBody.position.x,
+                    y: clickedBody.position.y,
+                },
+                force: force,
+                distance: distance,
+            });
+
             // Increment the attempts counter BEFORE applying force
             // This ensures the "first attempt" state is set before physics might cause scoring
             this.gameManager.addAttempt();
@@ -247,19 +263,43 @@ export class InputHandler {
                 force,
             );
 
-            // Calculate volume based on distance (e.g., scale distance up to 200px to volume 1.0, with a minimum of 0.2)
-            const maxDistanceForFullVolume = 200;
-            const minVolume = 0.2;
+            // --- Calculate Volume based on Click Distance Relative to Body Size ---
+            let effectiveRadius = 50; // Default radius
+            const minVolume = 0.2; // Minimum sound volume
+
+            if (clickedBody.circleRadius && clickedBody.circleRadius > 0) {
+                // Use circleRadius if it's a circle
+                effectiveRadius = clickedBody.circleRadius;
+            } else if (clickedBody.area && clickedBody.area > 0) {
+                // Estimate radius from area for polygons (assuming roughly circular)
+                effectiveRadius = Math.sqrt(clickedBody.area / Math.PI);
+            }
+
+            // Ensure radius is at least 1 to avoid division issues
+            effectiveRadius = Math.max(1, effectiveRadius);
+
+            // Calculate volume: minVolume at center, increasing to 1.0 at the effective edge
+            const normalizedDistance = Math.min(
+                1.0,
+                distance / effectiveRadius,
+            ); // Clamp distance ratio to 1.0
             const calculatedVolume = Math.max(
                 minVolume,
-                Math.min(1.0, distance / maxDistanceForFullVolume),
-            );
+                minVolume + normalizedDistance * (1.0 - minVolume),
+            ); // Linear interpolation from minVolume up to 1.0
 
             // Play sound using AudioManager from GameManager
             this.gameManager.getAudioManager().playSound(
-                "hit",
+                "hit_01",
                 calculatedVolume,
             );
+            // Log calculated radius and volume for debugging
+            this.debugControl.logEvent("Click Sound Volume", {
+                distance,
+                effectiveRadius,
+                calculatedVolume,
+            });
+            // --- End Volume Calculation ---
 
             // Trigger particle explosion if the system is available
             if (this.particleSystem) {
@@ -275,22 +315,6 @@ export class InputHandler {
                     explosionForce * 1, //
                 );
             }
-
-            // Log the repelling action if debug mode is enabled
-            this.debugControl.logEvent("Body Repelled", {
-                id: clickedBody.id,
-                type: clickedBody.circleRadius
-                    ? "Circle"
-                    : clickedBody.vertices
-                    ? "Polygon"
-                    : "Rectangle",
-                position: {
-                    x: clickedBody.position.x,
-                    y: clickedBody.position.y,
-                },
-                force: force,
-                distance: distance,
-            });
         } else {
             // If Ctrl key is pressed and no body was clicked, create a random body
             if (event.ctrlKey) {

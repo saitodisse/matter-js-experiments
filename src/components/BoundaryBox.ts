@@ -9,6 +9,7 @@ import Matter from "matter-js";
 import { Engine } from "../core/Engine";
 import { GameManager } from "../core/GameManager";
 import { Bounds } from "matter-js";
+import { DebugControl } from "./DebugControl"; // Added
 /**
  * BoundaryBox Class
  *
@@ -31,6 +32,8 @@ export class BoundaryBox {
     private boxBounds: Bounds; // Use Matter.js Bounds type
     // Reference to the game manager
     private gameManager: GameManager;
+    // Reference to the debug control
+    private readonly debugControl: DebugControl; // Added
 
     /**
      * BoundaryBox constructor
@@ -38,11 +41,18 @@ export class BoundaryBox {
      * @param engine - Reference to the physics engine
      * @param width - Width of the canvas/screen
      * @param height - Height of the canvas/screen
+     * @param debugControl - Reference to the debug control instance // Added
      */
-    constructor(engine: Engine, width: number, height: number) {
+    constructor(
+        engine: Engine,
+        width: number,
+        height: number,
+        debugControl: DebugControl,
+    ) { // Added debugControl
         this.engine = engine;
         this.width = width;
         this.height = height;
+        this.debugControl = debugControl; // Added
         this.gameManager = GameManager.getInstance();
         this.createBoxParts(); // This will now calculate random position
         // this.setupCollisionDetection(); // Remove this - rely on handleCollision
@@ -77,7 +87,9 @@ export class BoundaryBox {
         // const maxY = this.height - padding - boxHeight / 2; // No longer needed for random Y
 
         // Ensure valid range before calculating random position
-        const randomX = maxX > minX ? (Math.random() * (maxX - minX) + minX) : this.width / 2;
+        const randomX = maxX > minX
+            ? (Math.random() * (maxX - minX) + minX)
+            : this.width / 2;
         // const randomY = maxY > minY ? (Math.random() * (maxY - minY) + minY) : this.height / 2; // Remove random Y calculation
 
         const boxCenterX = randomX;
@@ -88,23 +100,26 @@ export class BoundaryBox {
         // Store box dimensions for collision detection
         // Store calculated bounds for collision detection and external access
         this.boxBounds = {
-            min: { x: boxCenterX - boxWidth / 2, y: boxCenterY - boxHeight / 2 },
-            max: { x: boxCenterX + boxWidth / 2, y: boxCenterY + boxHeight / 2 },
+            min: {
+                x: boxCenterX - boxWidth / 2,
+                y: boxCenterY - boxHeight / 2,
+            },
+            max: {
+                x: boxCenterX + boxWidth / 2,
+                y: boxCenterY + boxHeight / 2,
+            },
         };
 
         // Log box dimensions and position for debugging
-        console.log(
-            "BoxA",
-            {
-                width: this.width,
-                height: this.height,
-                boxCenterX,
-                boxCenterY,
-                boxWidth,
-                boxHeight,
-                bounds: this.boxBounds
-            }
-        );
+        this.debugControl.logEvent("BoundaryBoxCreated", {
+            canvasWidth: this.width,
+            canvasHeight: this.height,
+            boxCenterX,
+            boxCenterY,
+            boxWidth,
+            boxHeight,
+            bounds: this.boxBounds,
+        });
 
         // Create the bottom wall of the box
         // Create the bottom wall of the box using calculated center and dimensions
@@ -168,14 +183,14 @@ export class BoundaryBox {
     // Collision is handled by handleCollision using 'collisionStart' event
     /**
      * Handles collision events with the box
-     * 
+     *
      * This method is called when a collision is detected between a body and the box.
      * If a body enters the box, it will be destroyed and a point will be added to the score.
      */
     private handleCollision(): void {
         // Get the game manager instance
         const gameManager = GameManager.getInstance();
-        
+
         // Add event listener for collision events
         Matter.Events.on(this.engine.getEngine(), "collisionStart", (event) => {
             // Get all collision pairs from the event
@@ -206,11 +221,13 @@ export class BoundaryBox {
 
                 // Check if the body is inside the box
                 // Check if the other body's center is within the box bounds
-                if (Matter.Bounds.contains(this.boxBounds, otherBody.position)) {
-                     // Log the event for debugging
-                    console.log(
-                        `Body ${otherBody.id} entered the box via collision!`,
-                    );
+                if (
+                    Matter.Bounds.contains(this.boxBounds, otherBody.position)
+                ) {
+                    // Log the event for debugging
+                    this.debugControl.logEvent("BodyEnteredBox", {
+                        bodyId: otherBody.id,
+                    });
                     // Call GameManager to handle scoring. It will decide whether to
                     // add score or restart based on attempts and settling state.
                     gameManager.addScore();
@@ -218,9 +235,12 @@ export class BoundaryBox {
                     // Remove the body from the world
                     // Use setTimeout to avoid issues with modifying composite during collision event
                     setTimeout(() => {
-                        Matter.Composite.remove(this.engine.getWorld(), otherBody);
+                        Matter.Composite.remove(
+                            this.engine.getWorld(),
+                            otherBody,
+                        );
                         // Check if the game is over after removing the body
-                         gameManager.checkGameOver();
+                        gameManager.checkGameOver();
                     }, 0);
                 }
             }

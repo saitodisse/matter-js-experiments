@@ -1,15 +1,31 @@
 // src/core/AudioManager.ts
+import { DebugControl } from "../components/DebugControl"; // Added
+
 export class AudioManager {
     private audioContext: AudioContext;
     private soundBuffers: Map<string, AudioBuffer> = new Map();
     private masterGain: GainNode;
+    private debugControl?: DebugControl; // Ensure it's optional
 
-    constructor() {
+    constructor() { // Removed parameter
+        // this.debugControl = debugControl; // Removed assignment
         this.audioContext =
             new (window.AudioContext || (window as any).webkitAudioContext)();
         this.masterGain = this.audioContext.createGain();
         this.masterGain.connect(this.audioContext.destination);
-        console.log("AudioContext initialized.");
+        // Log will happen when debugControl is set
+    }
+
+    /**
+     * Sets the DebugControl instance for logging.
+     * @param debugControl - The DebugControl instance.
+     */
+    public setDebugControl(debugControl: DebugControl): void { // Added method
+        this.debugControl = debugControl;
+        // Log initial state now that we have the logger
+        this.debugControl?.logEvent("AudioContextInit", {
+            state: this.audioContext.state,
+        });
     }
 
     async loadSound(name: string, url: string): Promise<void> {
@@ -19,12 +35,15 @@ export class AudioManager {
         }
 
         if (this.soundBuffers.has(name)) {
-            console.log(`Sound "${name}" already loaded.`);
+            this.debugControl?.logEvent("SoundLoadSkip", { // Added ?.
+                name,
+                reason: "Already loaded",
+            });
             return;
         }
 
         try {
-            console.log(`Loading sound: ${name} from ${url}`);
+            this.debugControl?.logEvent("SoundLoadStart", { name, url }); // Added ?.
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(
@@ -36,9 +55,10 @@ export class AudioManager {
                 arrayBuffer,
             );
             this.soundBuffers.set(name, audioBuffer);
-            console.log(`Sound "${name}" loaded and decoded successfully.`);
+            this.debugControl?.logEvent("SoundLoadSuccess", { name }); // Added ?.
         } catch (error) {
-            console.error(`Error loading sound "${name}" from ${url}:`, error);
+            console.error(`Error loading sound "${name}" from ${url}:`, error); // Keep console.error
+            this.debugControl?.logEvent("SoundLoadError", { name, url, error }); // Added ?.
         }
     }
 
@@ -56,7 +76,11 @@ export class AudioManager {
     private _playSoundInternal(name: string, volume: number = 1.0): void {
         const buffer = this.soundBuffers.get(name);
         if (!buffer) {
-            console.warn(`Sound "${name}" not found or not loaded yet.`);
+            console.warn(`Sound "${name}" not found or not loaded yet.`); // Keep console.warn
+            this.debugControl?.logEvent("SoundPlayWarning", { // Added ?.
+                name,
+                reason: "Not found or not loaded",
+            });
             return;
         }
 
@@ -76,9 +100,10 @@ export class AudioManager {
             gainNode.connect(this.masterGain);
 
             source.start(0);
-            console.log(`Playing sound: ${name} with volume: ${volume}`);
+            this.debugControl?.logEvent("SoundPlay", { name, volume }); // Added ?.
         } catch (error) {
-            console.error(`Error playing sound "${name}":`, error);
+            console.error(`Error playing sound "${name}":`, error); // Keep console.error
+            this.debugControl?.logEvent("SoundPlayError", { name, error }); // Added ?.
         }
     }
 

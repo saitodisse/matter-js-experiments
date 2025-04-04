@@ -9,6 +9,8 @@
 import Matter from "matter-js";
 import { SimulationInstance, SimulationOptions } from "../types";
 import { GameManager } from "./GameManager"; // Import GameManager
+import { DebugControl } from "../components/DebugControl"; // Added
+import { AudioManager } from "./AudioManager"; // Added
 /**
  * Engine Class
  *
@@ -29,16 +31,23 @@ export class Engine {
     private mouse: Matter.Mouse;
     private mouseConstraint: Matter.MouseConstraint;
 
+    // Optional components
+    private debugControl?: DebugControl; // Added
+    private audioManager?: AudioManager; // Added
+
     /**
      * Engine constructor
      *
      * @param options - Configuration options for the simulation
      */
-    constructor(options: SimulationOptions) {
+    constructor(options: SimulationOptions & { audioManager?: AudioManager }) { // Added audioManager to options
         // Create the Matter.js physics engine
         this.engine = Matter.Engine.create();
         // Get a reference to the world (container for all bodies)
         this.world = this.engine.world;
+
+        // Store optional components
+        this.audioManager = options.audioManager; // Added
 
         // Calculate the device pixel ratio for sharp rendering
         const pixelRatio = window.devicePixelRatio || 1;
@@ -63,6 +72,14 @@ export class Engine {
 
         // Setup collision event listener
         this.setupCollisionListener();
+    }
+
+    /**
+     * Sets the DebugControl instance for logging.
+     * @param debugControl - The DebugControl instance.
+     */
+    public setDebugControl(debugControl: DebugControl): void { // Added method
+        this.debugControl = debugControl;
     }
 
     /**
@@ -214,7 +231,7 @@ export class Engine {
      * Plays a sound when bodies collide, with volume based on impact velocity.
      */
     private setupCollisionListener(): void {
-        const audioManager = GameManager.getInstance().getAudioManager();
+        // Removed: const audioManager = GameManager.getInstance().getAudioManager();
 
         Matter.Events.on(this.engine, "collisionStart", (event) => {
             event.pairs.forEach((pair) => {
@@ -241,10 +258,14 @@ export class Engine {
                 );
 
                 // Play the sound
-                // Add a small threshold to avoid sounds for very gentle contacts
-                if (volume > minVolume + 0.05) { // Only play if volume is noticeably above minimum
-                    audioManager.playSound("hit", volume);
-                    // console.log(`Collision! Speed: ${impactSpeed.toFixed(2)}, Volume: ${volume.toFixed(2)}`);
+                // Play the sound if audioManager exists and volume is sufficient
+                if (this.audioManager && volume > minVolume + 0.05) { // Changed to this.audioManager
+                    this.audioManager.playSound("plop_01", volume); // Changed to this.audioManager
+                    // Log the collision event if debugControl exists
+                    this.debugControl?.logEvent("Collision", { // Added debug log
+                        speed: impactSpeed.toFixed(2),
+                        volume: volume.toFixed(2),
+                    });
                 }
             });
         });

@@ -7,6 +7,7 @@
 
 import { Engine } from "./Engine";
 import { AudioManager } from "./AudioManager"; // Import AudioManager
+import { DebugControl } from "../components/DebugControl"; // Added
 
 // Define game modes
 type GameMode = "single" | "two" | null;
@@ -21,6 +22,7 @@ export class GameManager {
   // Singleton instance
   private static instance: GameManager;
   private audioManager: AudioManager; // Add AudioManager instance
+  private debugControl?: DebugControl; // Added
 
   // Game Mode
   private gameMode: GameMode = null;
@@ -111,7 +113,9 @@ export class GameManager {
    */
   public setInitialBodyCount(count: number): void {
     this.initialBodyCount = count;
-    console.log(`Initial body count set to: ${count}`);
+    this.debugControl?.logEvent("GameState", {
+      message: `Initial body count set to: ${count}`,
+    });
   }
 
   /**
@@ -132,7 +136,10 @@ export class GameManager {
     } else {
       // Fallback if container not found
       this.playerTurnElement = document.createElement("div"); // Dummy element
-      console.error("Game info container not found!");
+      // console.error("Game info container not found!"); // Keep as error or log?
+      this.debugControl?.logEvent("UIWarning", {
+        message: "Game info container not found!",
+      });
     }
 
     // Get references to game over modal elements
@@ -148,11 +155,11 @@ export class GameManager {
 
     // Add click event listeners
     this.onePlayerButton.addEventListener("click", () => {
-      this.audioManager.playSound("hit", 0.7); // Play sound on button click
+      this.audioManager.playSound("plop_02", 0.7); // Play sound on button click
       this.startGame("single");
     });
     this.twoPlayerButton.addEventListener("click", () => {
-      this.audioManager.playSound("hit", 0.7); // Play sound on button click
+      this.audioManager.playSound("plop_02", 0.7); // Play sound on button click
       this.startGame("two");
     });
 
@@ -168,7 +175,7 @@ export class GameManager {
 
     // Add click event to restart button
     this.restartButton.addEventListener("click", () => {
-      this.audioManager.playSound("hit", 0.7); // Play sound on button click
+      this.audioManager.playSound("pop", 0.7); // Play sound on button click
       this.restartGame();
     });
 
@@ -181,15 +188,84 @@ export class GameManager {
   }
 
   /**
+   * Sets the DebugControl instance for logging.
+   * @param debugControl - The DebugControl instance.
+   */
+  public setDebugControl(debugControl: DebugControl): void { // Added method
+    this.debugControl = debugControl;
+    // Also pass it to the AudioManager instance
+    this.audioManager.setDebugControl(debugControl);
+  }
+
+  /**
    * Preloads necessary game sounds
    */
   private preloadSounds(): void {
-    // Preload the main sound
+    // Preload sounds
     this.audioManager.loadSound(
       "hit",
       "/sounds/hammer-hitting-a-head-100624.mp3",
     )
-      .catch((error) => console.error("Failed to preload sound:", error));
+      .catch((error) => {
+        const message =
+          "Failed to preload /sounds/hammer-hitting-a-head-100624.mp3";
+        console.error(message, error); // Keep console.error for critical failures
+        this.debugControl?.logEvent("AudioError", { message, error });
+      }); // Fixed parenthesis placement
+    this.audioManager.loadSound(
+      "hit_01",
+      "/sounds/hit_01.ogg",
+    )
+      .catch((error) => {
+        const message = "Failed to preload /sounds/hit_01.ogg";
+        console.error(message, error); // Keep console.error
+        this.debugControl?.logEvent("AudioError", { message, error });
+      }); // Fixed parenthesis placement
+    this.audioManager.loadSound(
+      "plop_01",
+      "/sounds/plop_01.ogg",
+    )
+      .catch((error) => {
+        const message = "Failed to preload /sounds/plop_01.ogg";
+        console.error(message, error); // Keep console.error
+        this.debugControl?.logEvent("AudioError", { message, error });
+      }); // Fixed parenthesis placement
+    this.audioManager.loadSound(
+      "plop_02",
+      "/sounds/plop_02.ogg",
+    )
+      .catch((error) => {
+        const message = "Failed to preload /sounds/plop_02.ogg";
+        console.error(message, error); // Keep console.error
+        this.debugControl?.logEvent("AudioError", { message, error });
+      }); // Fixed parenthesis placement
+    this.audioManager.loadSound(
+      "pop",
+      "/sounds/pop.ogg",
+    )
+      .catch((error) => {
+        const message = "Failed to preload /sounds/pop.ogg";
+        console.error(message, error); // Keep console.error
+        this.debugControl?.logEvent("AudioError", { message, error });
+      });
+    this.audioManager.loadSound(
+      "wooden_01",
+      "/sounds/wooden_01.ogg",
+    )
+      .catch((error) => {
+        const message = "Failed to preload /sounds/wooden_01.ogg";
+        console.error(message, error); // Keep console.error
+        this.debugControl?.logEvent("AudioError", { message, error });
+      });
+    this.audioManager.loadSound(
+      "doorClose_4",
+      "/sounds/doorClose_4.ogg",
+    )
+      .catch((error) => {
+        const message = "Failed to preload /sounds/doorClose_4.ogg";
+        console.error(message, error); // Keep console.error
+        this.debugControl?.logEvent("AudioError", { message, error });
+      }); // Fixed parenthesis placement
   }
 
   /**
@@ -202,7 +278,9 @@ export class GameManager {
     this.resetGame(); // Reset stats for the new game
     this.hideGameStartModal();
     this.updateScoreDisplay(); // Show initial score display for the mode
-    console.log(`Game started in ${mode} player mode.`);
+    this.debugControl?.logEvent("GameState", {
+      message: `Game started in ${mode} player mode.`,
+    });
     // Potentially trigger engine setup or other start actions if needed
     // For now, assume main.ts handles the engine runner start
   }
@@ -307,31 +385,43 @@ export class GameManager {
 
     // Prevent scoring before the first attempt in any mode
     if (!this.firstAttemptMade) {
-      console.log("Score added before first attempt. Restarting game.");
+      this.debugControl?.logEvent("GameWarning", {
+        message: "Score added before first attempt. Restarting game.",
+      });
       this.restartGame(); // Or handle differently, maybe just ignore score?
       return;
     }
 
     if (this.gameMode === "single") {
       this.score += points;
-      console.log(`Score increased! Current score: ${this.score}`);
+      this.debugControl?.logEvent("PlayerAction", {
+        action: "score",
+        mode: "single",
+        value: this.score,
+      });
     } else if (this.gameMode === "two") {
       // Score is awarded to the player who made the last attempt
       if (this.lastPlayerToAttempt === 1) {
         this.player1Score += points;
-        console.log(
-          `Player 1 score increased! Current score: ${this.player1Score}`,
-        );
+        this.debugControl?.logEvent("PlayerAction", {
+          action: "score",
+          mode: "two",
+          player: 1,
+          value: this.player1Score,
+        });
       } else {
         this.player2Score += points;
-        console.log(
-          `Player 2 score increased! Current score: ${this.player2Score}`,
-        );
+        this.debugControl?.logEvent("PlayerAction", {
+          action: "score",
+          mode: "two",
+          player: 2,
+          value: this.player2Score,
+        });
       }
     }
 
     this.updateScoreDisplay();
-    this.audioManager.playSound("hit", 0.8); // Play sound on score
+    this.audioManager.playSound("plop_02", 0.8); // Play sound on score
     this.checkGameOver(); // Check if adding score ended the game
   }
 
@@ -347,12 +437,18 @@ export class GameManager {
     // Mark that the first attempt has been made, if not already
     if (!this.firstAttemptMade) {
       this.firstAttemptMade = true;
-      console.log("First attempt registered.");
+      this.debugControl?.logEvent("GameState", {
+        message: "First attempt registered.",
+      });
     }
 
     if (this.gameMode === "single") {
       this.attempts += count;
-      console.log(`Attempt made! Total attempts: ${this.attempts}`);
+      this.debugControl?.logEvent("PlayerAction", {
+        action: "attempt",
+        mode: "single",
+        value: this.attempts,
+      });
       // In single player, the 'last player' is always player 1 conceptually
       this.lastPlayerToAttempt = 1;
     } else if (this.gameMode === "two") {
@@ -361,18 +457,26 @@ export class GameManager {
 
       if (this.currentPlayer === 1) {
         this.player1Attempts += count;
-        console.log(
-          `Player 1 attempt made! Total attempts: ${this.player1Attempts}`,
-        );
+        this.debugControl?.logEvent("PlayerAction", {
+          action: "attempt",
+          mode: "two",
+          player: 1,
+          value: this.player1Attempts,
+        });
       } else {
         this.player2Attempts += count;
-        console.log(
-          `Player 2 attempt made! Total attempts: ${this.player2Attempts}`,
-        );
+        this.debugControl?.logEvent("PlayerAction", {
+          action: "attempt",
+          mode: "two",
+          player: 2,
+          value: this.player2Attempts,
+        });
       }
       // Switch player turn
       this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
-      console.log(`Switched turn to Player ${this.currentPlayer}`);
+      this.debugControl?.logEvent("GameState", {
+        message: `Switched turn to Player ${this.currentPlayer}`,
+      });
     }
 
     this.updateScoreDisplay();
@@ -399,11 +503,13 @@ export class GameManager {
       this.firstAttemptMade
     ) {
       this.isGameOver = true;
-      console.log("Game over! All bodies collected.");
+      this.debugControl?.logEvent("GameState", {
+        message: "Game over! All bodies collected.",
+      });
 
       // Show the game over modal
       this.showGameOverModal();
-      this.audioManager.playSound("hit", 1.0); // Play sound on game over
+      this.audioManager.playSound("doorClose_4", 1.0); // Play sound on game over
     }
   }
 
@@ -488,7 +594,7 @@ export class GameManager {
 
     // Update display after resetting
     this.updateScoreDisplay();
-    console.log("Game state reset.");
+    this.debugControl?.logEvent("GameState", { message: "Game state reset." });
   }
 
   /**
