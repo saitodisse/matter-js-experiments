@@ -1,6 +1,6 @@
 /**
  * BodyFactory.ts
- * 
+ *
  * This file contains the BodyFactory class, responsible for creating different types of physical bodies
  * for the simulation using the Matter.js library. It provides methods to create circles, polygons,
  * rectangles, and random bodies with configurable physical and visual properties.
@@ -12,7 +12,7 @@ import { DebugControl } from "./DebugControl";
 
 /**
  * BodyFactory Class
- * 
+ *
  * Responsible for creating different types of physical bodies in the simulation.
  * Uses the Matter.js library to create bodies and logs creation events
  * through DebugControl for debugging purposes.
@@ -23,7 +23,7 @@ export class BodyFactory {
 
     /**
      * BodyFactory constructor
-     * 
+     *
      * @param debugControl - DebugControl instance for logging events
      */
     constructor(debugControl: DebugControl) {
@@ -32,7 +32,7 @@ export class BodyFactory {
 
     /**
      * Creates a circular body
-     * 
+     *
      * @param x - X position of the circle's center
      * @param y - Y position of the circle's center
      * @param radius - Radius of the circle
@@ -48,7 +48,7 @@ export class BodyFactory {
         // Create the circular body with specified physical and visual properties
         const body = Matter.Bodies.circle(x, y, radius, {
             // Define elasticity (how "bouncy" the body is)
-            restitution: options.restitution || 0.9,
+            restitution: options.restitution || 0.8,
             // Define friction (resistance to movement when in contact with other bodies)
             friction: options.friction || 0.1,
             // Visual settings for the body
@@ -81,7 +81,7 @@ export class BodyFactory {
 
     /**
      * Creates a polygonal body
-     * 
+     *
      * @param x - X position of the polygon's center
      * @param y - Y position of the polygon's center
      * @param sides - Number of sides of the polygon
@@ -99,7 +99,7 @@ export class BodyFactory {
         // Create the polygonal body with specified physical and visual properties
         const body = Matter.Bodies.polygon(x, y, sides, radius, {
             // Define elasticity
-            restitution: options.restitution || 0.9,
+            restitution: options.restitution || 0.8,
             // Define friction
             friction: options.friction || 0.1,
             // Visual settings for the body
@@ -132,7 +132,7 @@ export class BodyFactory {
 
     /**
      * Creates a rectangular body
-     * 
+     *
      * @param x - X position of the rectangle's center
      * @param y - Y position of the rectangle's center
      * @param width - Width of the rectangle
@@ -150,7 +150,7 @@ export class BodyFactory {
         // Create the rectangular body with specified physical and visual properties
         const body = Matter.Bodies.rectangle(x, y, width, height, {
             // Define elasticity
-            restitution: options.restitution || 0.9,
+            restitution: options.restitution || 0.8,
             // Define friction
             friction: options.friction || 0.1,
             // Visual settings for the body
@@ -186,7 +186,7 @@ export class BodyFactory {
 
     /**
      * Creates a random body (circle, polygon, or rectangle)
-     * 
+     *
      * @param x - X position of the body's center
      * @param y - Y position of the body's center
      * @returns Random Matter.js physical body
@@ -200,8 +200,7 @@ export class BodyFactory {
         if (type < 0.33) {
             // Create a circle with random radius between 10 and 40
             body = this.createCircle(x, y, Matter.Common.random(10, 40));
-        } 
-        // Create a polygon if the number is between 0.33 and 0.66
+        } // Create a polygon if the number is between 0.33 and 0.66
         else if (type < 0.66) {
             // Determine a random number of sides between 3 and 8
             const sides = Math.floor(Matter.Common.random(3, 8));
@@ -212,8 +211,7 @@ export class BodyFactory {
                 sides,
                 Matter.Common.random(20, 50),
             );
-        } 
-        // Create a rectangle if the number is greater than 0.66
+        } // Create a rectangle if the number is greater than 0.66
         else {
             // Determine random dimensions for the rectangle
             const width = Matter.Common.random(30, 80);

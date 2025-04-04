@@ -6,6 +6,7 @@
  */
 
 import { Engine } from "./Engine";
+import { AudioManager } from "./AudioManager"; // Import AudioManager
 
 // Define game modes
 type GameMode = "single" | "two" | null;
@@ -19,6 +20,7 @@ type GameMode = "single" | "two" | null;
 export class GameManager {
   // Singleton instance
   private static instance: GameManager;
+  private audioManager: AudioManager; // Add AudioManager instance
 
   // Game Mode
   private gameMode: GameMode = null;
@@ -67,7 +69,9 @@ export class GameManager {
    * Private constructor to enforce singleton pattern
    */
   private constructor() {
+    this.audioManager = new AudioManager(); // Instantiate AudioManager
     this.initializeUIElements();
+    this.preloadSounds(); // Call preload method
   }
 
   /**
@@ -144,9 +148,11 @@ export class GameManager {
 
     // Add click event listeners
     this.onePlayerButton.addEventListener("click", () => {
+      this.audioManager.playSound("hit", 0.7); // Play sound on button click
       this.startGame("single");
     });
     this.twoPlayerButton.addEventListener("click", () => {
+      this.audioManager.playSound("hit", 0.7); // Play sound on button click
       this.startGame("two");
     });
 
@@ -162,6 +168,7 @@ export class GameManager {
 
     // Add click event to restart button
     this.restartButton.addEventListener("click", () => {
+      this.audioManager.playSound("hit", 0.7); // Play sound on button click
       this.restartGame();
     });
 
@@ -171,6 +178,18 @@ export class GameManager {
 
     // Show the game start modal
     this.showGameStartModal();
+  }
+
+  /**
+   * Preloads necessary game sounds
+   */
+  private preloadSounds(): void {
+    // Preload the main sound
+    this.audioManager.loadSound(
+      "hit",
+      "/sounds/hammer-hitting-a-head-100624.mp3",
+    )
+      .catch((error) => console.error("Failed to preload sound:", error));
   }
 
   /**
@@ -312,6 +331,7 @@ export class GameManager {
     }
 
     this.updateScoreDisplay();
+    this.audioManager.playSound("hit", 0.8); // Play sound on score
     this.checkGameOver(); // Check if adding score ended the game
   }
 
@@ -383,6 +403,7 @@ export class GameManager {
 
       // Show the game over modal
       this.showGameOverModal();
+      this.audioManager.playSound("hit", 1.0); // Play sound on game over
     }
   }
 
@@ -468,5 +489,13 @@ export class GameManager {
     // Update display after resetting
     this.updateScoreDisplay();
     console.log("Game state reset.");
+  }
+
+  /**
+   * Gets the AudioManager instance
+   * @returns The AudioManager instance
+   */
+  public getAudioManager(): AudioManager {
+    return this.audioManager;
   }
 }

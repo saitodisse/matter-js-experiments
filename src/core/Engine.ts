@@ -8,7 +8,7 @@
 
 import Matter from "matter-js";
 import { SimulationInstance, SimulationOptions } from "../types";
-
+import { GameManager } from "./GameManager"; // Import GameManager
 /**
  * Engine Class
  *
@@ -60,6 +60,9 @@ export class Engine {
 
         // Create the runner for updating the simulation
         this.runner = Matter.Runner.create();
+
+        // Setup collision event listener
+        this.setupCollisionListener();
     }
 
     /**
@@ -204,5 +207,46 @@ export class Engine {
             canvas: this.render.canvas,
             stop: this.stop.bind(this),
         };
+    }
+
+    /**
+     * Sets up the collision event listener for the physics engine.
+     * Plays a sound when bodies collide, with volume based on impact velocity.
+     */
+    private setupCollisionListener(): void {
+        const audioManager = GameManager.getInstance().getAudioManager();
+
+        Matter.Events.on(this.engine, "collisionStart", (event) => {
+            event.pairs.forEach((pair) => {
+                // Check if the collision involves at least one non-static body
+                // This prevents sounds for static-static interactions if any existed
+                if (pair.bodyA.isStatic && pair.bodyB.isStatic) {
+                    return; // Skip if both are static
+                }
+
+                // Calculate relative velocity magnitude
+                const relativeVelocity = Matter.Vector.sub(
+                    pair.bodyA.velocity,
+                    pair.bodyB.velocity,
+                );
+                const impactSpeed = Matter.Vector.magnitude(relativeVelocity);
+
+                // Map impact speed to volume (adjust scaling factor and min/max as needed)
+                const maxSpeedForFullVolume = 15; // Example speed threshold for max volume
+                const minVolume = 0.1;
+                const maxVolume = 1.0;
+                const volume = Math.max(
+                    minVolume,
+                    Math.min(maxVolume, impactSpeed / maxSpeedForFullVolume),
+                );
+
+                // Play the sound
+                // Add a small threshold to avoid sounds for very gentle contacts
+                if (volume > minVolume + 0.05) { // Only play if volume is noticeably above minimum
+                    audioManager.playSound("hit", volume);
+                    // console.log(`Collision! Speed: ${impactSpeed.toFixed(2)}, Volume: ${volume.toFixed(2)}`);
+                }
+            });
+        });
     }
 }

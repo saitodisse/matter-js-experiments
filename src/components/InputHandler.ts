@@ -247,6 +247,20 @@ export class InputHandler {
                 force,
             );
 
+            // Calculate volume based on distance (e.g., scale distance up to 200px to volume 1.0, with a minimum of 0.2)
+            const maxDistanceForFullVolume = 200;
+            const minVolume = 0.2;
+            const calculatedVolume = Math.max(
+                minVolume,
+                Math.min(1.0, distance / maxDistanceForFullVolume),
+            );
+
+            // Play sound using AudioManager from GameManager
+            this.gameManager.getAudioManager().playSound(
+                "hit",
+                calculatedVolume,
+            );
+
             // Trigger particle explosion if the system is available
             if (this.particleSystem) {
                 // Scale distance to a reasonable force value (e.g., 1-10)
