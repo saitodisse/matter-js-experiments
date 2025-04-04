@@ -15,6 +15,7 @@ import { BoundaryBox } from "./components/BoundaryBox";
 import { InitialShapes } from "./components/InitialShapes";
 import { BodyWrapper } from "./utils/BodyWrapper";
 import { GameManager } from "./core/GameManager";
+import { ParticleSystem } from "./effects/ParticleSystem"; // Import ParticleSystem
 import Matter from "matter-js";
 
 /**
@@ -31,6 +32,7 @@ class BallPoolSimulation {
   private bodyFactory: BodyFactory;
   private bodyWrapper: BodyWrapper;
   private gameManager: GameManager;
+  private particleSystem: ParticleSystem; // Add ParticleSystem property
 
   // Game components
   private boundaryWalls: BoundaryWalls;
@@ -64,7 +66,7 @@ class BallPoolSimulation {
     // Create debug control for toggling debug features
     this.debugControl = new DebugControl(
       this.engine.getEngine(),
-      this.engine.getRender()
+      this.engine.getRender(),
     );
 
     // Create body factory for generating physics bodies
@@ -84,7 +86,7 @@ class BallPoolSimulation {
     this.inputHandler = new InputHandler(
       this.engine,
       this.bodyFactory,
-      this.debugControl
+      this.debugControl,
     );
 
     // Create body wrapper for screen wrapping effect
@@ -93,6 +95,12 @@ class BallPoolSimulation {
       min: { x: -100, y: 0 }, // Extend left boundary
       max: { x: window.innerWidth + 100, y: window.innerHeight }, // Extend right boundary
     });
+
+    // Initialize Particle System
+    this.particleSystem = new ParticleSystem(this.engine.getRender().context);
+
+    // Pass ParticleSystem to InputHandler
+    this.inputHandler.setParticleSystem(this.particleSystem); // Add this method to InputHandler later
 
     // Set up the screen wrapping functionality
     this.setupBodyWrapping();
@@ -135,14 +143,14 @@ class BallPoolSimulation {
     this.boundaryWalls = new BoundaryWalls(
       this.engine,
       window.innerWidth,
-      window.innerHeight
+      window.innerHeight,
     );
 
     // Re-create the boundary box
     this.boundaryBox = new BoundaryBox(
       this.engine,
       window.innerWidth,
-      window.innerHeight
+      window.innerHeight,
     );
 
     // Re-create the initial shapes
@@ -161,17 +169,32 @@ class BallPoolSimulation {
    * Sets up the screen wrapping functionality for all bodies
    *
    * This method adds an event listener to the physics engine that
-   * wraps bodies around the screen edges before each physics update.
+   * wraps bodies around the screen edges before each physics update,
+   * and updates the particle system.
    */
   private setupBodyWrapping(): void {
     // Add event listener to the 'beforeUpdate' event
-    Matter.Events.on(this.engine.getEngine(), "beforeUpdate", () => {
+    let lastTimestamp = 0;
+    Matter.Events.on(this.engine.getEngine(), "beforeUpdate", (event) => {
+      // Calculate deltaTime
+      const currentTimestamp = event.timestamp;
+      const deltaTime = currentTimestamp - (lastTimestamp || currentTimestamp); // Handle first frame
+      lastTimestamp = currentTimestamp;
+
+      // Update Particle System
+      this.particleSystem.update(deltaTime);
+
       // Get all bodies in the simulation
       const allBodies = this.engine.getAllBodies();
       // Apply wrapping to each body
       for (const body of allBodies) {
         this.bodyWrapper.wrapBody(body);
       }
+    });
+
+    // Add event listener for drawing particles after rendering
+    Matter.Events.on(this.engine.getRender(), "afterRender", () => {
+      this.particleSystem.draw();
     });
   }
 
@@ -181,7 +204,7 @@ class BallPoolSimulation {
    * This method starts both the renderer and the physics engine.
    */
   public start(): void {
-    this.engine.start();
+    this.engine.start(); // This starts the Runner and Render loop
   }
 
   /**

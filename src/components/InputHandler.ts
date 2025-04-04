@@ -1,6 +1,6 @@
 /**
  * InputHandler.ts
- * 
+ *
  * This file contains the InputHandler class, which manages all user input interactions
  * with the physics simulation, including mouse and keyboard events. It provides functionality
  * for creating, manipulating, and removing physics bodies through user input.
@@ -11,10 +11,11 @@ import { Engine } from "../core/Engine";
 import { BodyFactory } from "./BodyFactory";
 import { DebugControl } from "./DebugControl";
 import { GameManager } from "../core/GameManager";
+import { ParticleSystem } from "../effects/ParticleSystem"; // Import ParticleSystem
 
 /**
  * InputHandler Class
- * 
+ *
  * Handles all user input events (mouse and keyboard) and translates them into
  * actions in the physics simulation, such as creating new bodies, applying forces,
  * or removing existing bodies.
@@ -28,12 +29,14 @@ export class InputHandler {
     private mousePosition: { x: number; y: number } = { x: 0, y: 0 };
     // Canvas element
     private canvas: HTMLCanvasElement;
+    // Particle system for visual effects
+    private particleSystem: ParticleSystem | null = null; // Add particleSystem property
     // Game manager for tracking player actions
     private gameManager: GameManager;
 
     /**
      * InputHandler constructor
-     * 
+     *
      * @param engine - Reference to the physics engine
      * @param bodyFactory - Factory for creating physics bodies
      * @param debugControl - Debug control for logging events
@@ -48,9 +51,17 @@ export class InputHandler {
         this.debugControl = debugControl;
         this.canvas = this.engine.getCanvas();
         this.gameManager = GameManager.getInstance();
-        
+
         // Set up event listeners
         this.setupEventListeners();
+    }
+
+    /**
+     * Sets the particle system instance.
+     * @param particleSystem The ParticleSystem instance.
+     */
+    public setParticleSystem(particleSystem: ParticleSystem): void {
+        this.particleSystem = particleSystem;
     }
 
     /**
@@ -96,7 +107,7 @@ export class InputHandler {
 
     /**
      * Gets the mouse position relative to the canvas
-     * 
+     *
      * @param event - Mouse event
      * @returns Object with x and y coordinates
      */
@@ -104,15 +115,15 @@ export class InputHandler {
         const rect = this.canvas.getBoundingClientRect();
         return {
             x: event.clientX - rect.left,
-            y: event.clientY - rect.top
+            y: event.clientY - rect.top,
         };
     }
 
     /**
      * Handles mouse down events
-     * 
+     *
      * For right-click (button 2), removes non-static bodies at the click position.
-     * 
+     *
      * @param event - The mouse event
      */
     private handleMouseDown(event: MouseEvent): void {
@@ -165,9 +176,9 @@ export class InputHandler {
 
     /**
      * Handles mouse up events
-     * 
+     *
      * Currently only logs the event if debug mode is enabled.
-     * 
+     *
      * @param event - The mouse event
      */
     private handleMouseUp(event: MouseEvent): void {
@@ -185,10 +196,10 @@ export class InputHandler {
 
     /**
      * Handles click events
-     * 
+     *
      * Left-click: Applies a repelling force to clicked bodies
      * Ctrl+Left-click: Creates a random body at the click position
-     * 
+     *
      * @param event - The mouse event
      */
     private handleClick(event: MouseEvent): void {
@@ -236,6 +247,21 @@ export class InputHandler {
                 force,
             );
 
+            // Trigger particle explosion if the system is available
+            if (this.particleSystem) {
+                // Scale distance to a reasonable force value (e.g., 1-10)
+                // Adjust the scaling factor (e.g., 0.1) and max value (e.g., 10) as needed
+                const explosionForce = Math.min(
+                    10,
+                    Math.max(1, distance * 0.1),
+                );
+                this.particleSystem.createExplosion(
+                    mousePosition.x,
+                    mousePosition.y,
+                    explosionForce * 1, //
+                );
+            }
+
             // Log the repelling action if debug mode is enabled
             this.debugControl.logEvent("Body Repelled", {
                 id: clickedBody.id,
@@ -265,9 +291,9 @@ export class InputHandler {
 
     /**
      * Handles context menu events (right-click)
-     * 
+     *
      * Prevents the default context menu from appearing.
-     * 
+     *
      * @param event - The mouse event
      */
     private handleContextMenu(event: MouseEvent): void {
@@ -283,10 +309,10 @@ export class InputHandler {
 
     /**
      * Handles mouse move events
-     * 
+     *
      * Right-click+drag: Removes bodies as the mouse moves over them
      * Ctrl+Left-click+drag: Creates random bodies along the mouse path
-     * 
+     *
      * @param event - The mouse event
      */
     private handleMouseMove(event: MouseEvent): void {
@@ -343,9 +369,9 @@ export class InputHandler {
 
     /**
      * Handles keyboard events
-     * 
+     *
      * Delete key: Removes the first non-static body found in the world
-     * 
+     *
      * @param event - The keyboard event
      */
     private handleKeyDown(event: KeyboardEvent): void {
