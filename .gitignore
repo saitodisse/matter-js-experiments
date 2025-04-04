@@ -3,7 +3,7 @@ node_modules
 # vite build
 build
 # vite preview
-public
+/public
 # vite deploy
 dist
 
