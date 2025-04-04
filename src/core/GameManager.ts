@@ -24,24 +24,29 @@ export class GameManager {
   private audioManager: AudioManager; // Add AudioManager instance
   private debugControl?: DebugControl; // Added
 
-  // Game Mode
+  // Game Mode & State
   private gameMode: GameMode = null;
-  private currentPlayer: 1 | 2 = 1; // Relevant for two-player mode
-  private lastPlayerToAttempt: 1 | 2 = 1; // Track who made the last attempt
+  private currentPlayer: 1 | 2 = 1; // Current player in two-player mode
+  private lastPlayerToAttempt: 1 | 2 = 1; // Track who made the last attempt (for scoring)
+  private isMatchOver: boolean = false; // Flag for Best of 7 match state
 
-  // Player's score (number of objects collected) - Used for single player
-  private score: number = 0;
-  // Number of attempts (forces applied) - Used for single player
-  private attempts: number = 0;
+  // Round State (Score/Attempts within a single round)
+  private score: number = 0; // Single player score per round
+  private attempts: number = 0; // Single player attempts per round
+  private player1Score: number = 0; // Player 1 score per round
+  private player2Score: number = 0; // Player 2 score per round
+  private player1Attempts: number = 0; // Player 1 attempts per round
+  private player2Attempts: number = 0; // Player 2 attempts per round
 
-  // Scores and attempts for two-player mode
-  private player1Score: number = 0;
-  private player2Score: number = 0;
-  private player1Attempts: number = 0;
-  private player2Attempts: number = 0;
+  // Match State (Best of 7)
+  private player1RoundsWon: number = 0;
+  private player2RoundsWon: number = 0;
+  private currentRoundNumber: number = 1;
+  private startingPlayerThisRound: 1 | 2 = 1; // Tracks who starts the current round (2P)
 
   // DOM elements for displaying game information
-  private scoreElement: HTMLElement;
+  private roundScoreElement: HTMLElement; // Added for round scores
+  private scoreElement: HTMLElement; // Displays attempts/score per round
   private playerTurnElement: HTMLElement; // Added for two-player turn display
 
   // Game start modal elements
@@ -49,10 +54,10 @@ export class GameManager {
   private onePlayerButton: HTMLElement;
   private twoPlayerButton: HTMLElement;
 
-  // Game over modal elements
-  private gameOverModal: HTMLElement;
-  private finalScoreElement: HTMLElement;
-  private restartButton: HTMLElement;
+  // Match over modal elements (Renamed from Game Over)
+  private matchOverModal: HTMLElement;
+  private finalMatchScoreElement: HTMLElement;
+  private restartButton: HTMLElement; // Button now restarts the *match*
 
   // Reference to the engine
   private engine: Engine | null = null;
@@ -60,8 +65,8 @@ export class GameManager {
   // Initial number of non-static bodies
   private initialBodyCount: number = 0;
 
-  // Flag to track if the game is over
-  private isGameOver: boolean = false;
+  // Flag to track if the *round* is over (implicitly handled by checking bodies)
+  // isMatchOver flag handles the overall match state
 
   // Callback for restarting the game
   private restartCallback: (() => void) | null = null;
@@ -115,6 +120,7 @@ export class GameManager {
     this.initialBodyCount = count;
     this.debugControl?.logEvent("GameState", {
       message: `Initial body count set to: ${count}`,
+      round: this.currentRoundNumber, // Added round context
     });
   }
 
@@ -123,6 +129,9 @@ export class GameManager {
    */
   private initializeUIElements(): void {
     // Get references to game info elements
+    this.roundScoreElement = document.getElementById(
+      "round-score-display",
+    ) as HTMLElement; // Added
     this.scoreElement = document.getElementById("score-display") as HTMLElement;
     // Create player turn element dynamically or assume it exists in HTML
     // For simplicity, let's assume it's part of score-display for now
@@ -142,7 +151,7 @@ export class GameManager {
       });
     }
 
-    // Get references to game over modal elements
+    // Get references to game start modal elements
     this.gameStartModal = document.getElementById(
       "game-start-modal",
     ) as HTMLElement;
@@ -163,11 +172,12 @@ export class GameManager {
       this.startGame("two");
     });
 
-    this.gameOverModal = document.getElementById(
-      "game-over-modal",
+    // Get references to match over modal elements (Renamed IDs)
+    this.matchOverModal = document.getElementById(
+      "match-over-modal", // Renamed ID
     ) as HTMLElement;
-    this.finalScoreElement = document.getElementById(
-      "final-score",
+    this.finalMatchScoreElement = document.getElementById(
+      "final-match-score", // Renamed ID
     ) as HTMLElement;
     this.restartButton = document.getElementById(
       "restart-button",
@@ -176,12 +186,13 @@ export class GameManager {
     // Add click event to restart button
     this.restartButton.addEventListener("click", () => {
       this.audioManager.playSound("pop", 0.7); // Play sound on button click
-      this.restartGame();
+      this.resetGame("fullMatchRestart"); // Restart the whole match
     });
 
     // Update displays with initial values
     // Update displays with initial values (will be reset on game start)
-    this.updateScoreDisplay();
+    this.updateRoundScoreDisplay(); // Initialize round display
+    this.updateScoreDisplay(); // Initialize attempt/score display
 
     // Show the game start modal
     this.showGameStartModal();
@@ -274,11 +285,11 @@ export class GameManager {
    */
   private startGame(mode: GameMode): void {
     if (!mode) return;
-    this.gameMode = mode;
-    this.resetGame(); // Reset stats for the new game
+    this.gameMode = mode; // Set the game mode here
+    this.resetGame("fullMatchRestart"); // Reset stats for the new match
     this.hideGameStartModal();
-    this.updateScoreDisplay(); // Show initial score display for the mode
-    this.debugControl?.logEvent("GameState", {
+    // UI updates are handled within resetGame
+    this.debugControl?.logEvent("GameState", { // Keep this general GameState log
       message: `Game started in ${mode} player mode.`,
     });
     // Potentially trigger engine setup or other start actions if needed
@@ -286,7 +297,23 @@ export class GameManager {
   }
 
   /**
-   * Updates the score display based on the current game mode
+   * Updates the round score display (Best of 7)
+   */
+  private updateRoundScoreDisplay(): void {
+    if (this.gameMode === "single") {
+      // Display something relevant for single player rounds if needed
+      this.roundScoreElement.textContent =
+        `Round: ${this.currentRoundNumber} | Won: ${this.player1RoundsWon}`;
+    } else if (this.gameMode === "two") {
+      this.roundScoreElement.textContent =
+        `Round ${this.currentRoundNumber} | P1: ${this.player1RoundsWon} - P2: ${this.player2RoundsWon}`;
+    } else {
+      this.roundScoreElement.textContent = ""; // Hide before game start
+    }
+  }
+
+  /**
+   * Updates the current round's score/attempt display based on the current game mode
    */
   private updateScoreDisplay(): void {
     if (this.gameMode === "single") {
@@ -322,56 +349,34 @@ export class GameManager {
   }
 
   /**
-   * Shows the game over modal with final stats based on game mode
+   * Shows the match over modal with final match stats
    */
-  private showGameOverModal(): void {
+  private showMatchOverModal(): void {
     let finalMessage = "";
     if (this.gameMode === "single") {
-      const percentage = this.attempts > 0
-        ? Math.round((this.score / this.attempts) * 100)
-        : 0;
-      finalMessage =
-        `Final Score: ${this.score}/${this.attempts} (${percentage}%)`;
+      // Adjust message for single player match context if needed
+      finalMessage = `Match Complete! Rounds Won: ${this.player1RoundsWon}`;
     } else if (this.gameMode === "two") {
-      const p1Percentage = this.player1Attempts > 0
-        ? Math.round((this.player1Score / this.player1Attempts) * 100)
-        : 0;
-      const p2Percentage = this.player2Attempts > 0
-        ? Math.round((this.player2Score / this.player2Attempts) * 100)
-        : 0;
+      const winner = this.player1RoundsWon > this.player2RoundsWon
+        ? "Player 1"
+        : "Player 2";
       finalMessage =
-        `P1: ${this.player1Score}/${this.player1Attempts} (${p1Percentage}%)\nP2: ${this.player2Score}/${this.player2Attempts} (${p2Percentage}%)`;
-
-      // Determine winner
-      if (p1Percentage > p2Percentage) {
-        finalMessage += "\nPlayer 1 Wins!";
-      } else if (p2Percentage > p1Percentage) {
-        finalMessage += "\nPlayer 2 Wins!";
-      } else {
-        // Tie-breaker: lower attempts wins. If attempts are equal, it's a draw.
-        if (this.player1Attempts < this.player2Attempts) {
-          finalMessage += "\nPlayer 1 Wins (fewer attempts)!";
-        } else if (this.player2Attempts < this.player1Attempts) {
-          finalMessage += "\nPlayer 2 Wins (fewer attempts)!";
-        } else {
-          finalMessage += "\nIt's a Draw!";
-        }
-      }
+        `${winner} Wins the Match!\nFinal Score: ${this.player1RoundsWon} - ${this.player2RoundsWon}`;
     }
 
-    this.finalScoreElement.textContent = finalMessage;
+    this.finalMatchScoreElement.textContent = finalMessage;
 
     // Show the modal
-    this.gameOverModal.style.opacity = "1";
-    this.gameOverModal.style.pointerEvents = "auto";
+    this.matchOverModal.style.opacity = "1";
+    this.matchOverModal.style.pointerEvents = "auto";
   }
 
   /**
-   * Hides the game over modal
+   * Hides the match over modal
    */
-  private hideGameOverModal(): void {
-    this.gameOverModal.style.opacity = "0";
-    this.gameOverModal.style.pointerEvents = "none";
+  private hideMatchOverModal(): void {
+    this.matchOverModal.style.opacity = "0";
+    this.matchOverModal.style.pointerEvents = "none";
   }
 
   /**
@@ -380,15 +385,15 @@ export class GameManager {
    * @param points - Number of points to add (default: 1)
    */
   public addScore(points: number = 1): void {
-    // Prevent scoring if game hasn't started or is over
-    if (!this.gameMode || this.isGameOver) return;
+    // Prevent scoring if game hasn't started or match is over
+    if (!this.gameMode || this.isMatchOver) return;
 
     // Prevent scoring before the first attempt in any mode
     if (!this.firstAttemptMade) {
       this.debugControl?.logEvent("GameWarning", {
         message: "Score added before first attempt. Restarting game.",
       });
-      this.restartGame(); // Or handle differently, maybe just ignore score?
+      this.resetGame("fullMatchRestart"); // Should not happen ideally, restart match
       return;
     }
 
@@ -398,6 +403,7 @@ export class GameManager {
         action: "score",
         mode: "single",
         value: this.score,
+        round: this.currentRoundNumber, // Added round context
       });
     } else if (this.gameMode === "two") {
       // Score is awarded to the player who made the last attempt
@@ -408,6 +414,7 @@ export class GameManager {
           mode: "two",
           player: 1,
           value: this.player1Score,
+          round: this.currentRoundNumber, // Added round context
         });
       } else {
         this.player2Score += points;
@@ -416,13 +423,14 @@ export class GameManager {
           mode: "two",
           player: 2,
           value: this.player2Score,
+          round: this.currentRoundNumber, // Added round context
         });
       }
     }
 
     this.updateScoreDisplay();
     this.audioManager.playSound("plop_02", 0.8); // Play sound on score
-    this.checkGameOver(); // Check if adding score ended the game
+    this.checkRoundOver(); // Check if adding score ended the round/match
   }
 
   /**
@@ -431,14 +439,16 @@ export class GameManager {
    * @param count - Number of attempts to add (default: 1)
    */
   public addAttempt(count: number = 1): void {
-    // Prevent attempts if game hasn't started or is over
-    if (!this.gameMode || this.isGameOver) return;
+    // Prevent attempts if game hasn't started or match is over
+    if (!this.gameMode || this.isMatchOver) return;
 
     // Mark that the first attempt has been made, if not already
     if (!this.firstAttemptMade) {
       this.firstAttemptMade = true;
-      this.debugControl?.logEvent("GameState", {
-        message: "First attempt registered.",
+      // Added log for first attempt
+      this.debugControl?.logEvent("RoundState", {
+        message: "First attempt registered for this round.",
+        round: this.currentRoundNumber,
       });
     }
 
@@ -448,6 +458,7 @@ export class GameManager {
         action: "attempt",
         mode: "single",
         value: this.attempts,
+        round: this.currentRoundNumber, // Added round context
       });
       // In single player, the 'last player' is always player 1 conceptually
       this.lastPlayerToAttempt = 1;
@@ -462,6 +473,7 @@ export class GameManager {
           mode: "two",
           player: 1,
           value: this.player1Attempts,
+          round: this.currentRoundNumber, // Added round context
         });
       } else {
         this.player2Attempts += count;
@@ -470,12 +482,14 @@ export class GameManager {
           mode: "two",
           player: 2,
           value: this.player2Attempts,
+          round: this.currentRoundNumber, // Added round context
         });
       }
       // Switch player turn
       this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
-      this.debugControl?.logEvent("GameState", {
+      this.debugControl?.logEvent("GameState", { // Keep this general GameState log
         message: `Switched turn to Player ${this.currentPlayer}`,
+        round: this.currentRoundNumber, // Added round context
       });
     }
 
@@ -483,11 +497,25 @@ export class GameManager {
   }
 
   /**
-   * Checks if the game is over (all non-static bodies collected)
+   * Checks if the current round is over (all non-static bodies collected).
+   * If so, awards the round, checks for match completion, and proceeds.
    */
-  public checkGameOver(): void {
-    // If the game is already over or engine is not set, return
-    if (this.isGameOver || !this.engine || !this.gameMode) { // Added check for gameMode
+  public checkRoundOver(): void {
+    // Added log at the start of the function
+    this.debugControl?.logEvent("RoundCheck", {
+      message: "Checking if round is over...",
+      round: this.currentRoundNumber,
+    });
+    // If the match is already over, engine not set, or game mode not set, return
+    if (this.isMatchOver || !this.engine || !this.gameMode) {
+      // Added more detailed log for skipping
+      this.debugControl?.logEvent("RoundCheckSkipped", {
+        message: "Round check skipped.",
+        round: this.currentRoundNumber,
+        isMatchOver: this.isMatchOver,
+        engineExists: !!this.engine,
+        gameModeSet: !!this.gameMode,
+      });
       return;
     }
 
@@ -496,45 +524,108 @@ export class GameManager {
       .getAllBodies()
       .filter((body) => !body.isStatic);
 
-    // If there are no non-static bodies left, the game is over
-    // Ensure initialBodyCount was set and first attempt was made to prevent premature game over
+    // --- Debugging Round Over Condition ---
+    this.debugControl?.logEvent("CheckRoundOverValues", { // Changed event name for clarity
+      nonStaticBodiesCount: nonStaticBodies.length,
+      initialBodyCount: this.initialBodyCount,
+      firstAttemptMade: this.firstAttemptMade,
+      conditionMet: nonStaticBodies.length === 0 && this.initialBodyCount > 0 &&
+        this.firstAttemptMade,
+      round: this.currentRoundNumber, // Added round context
+    });
+    // --- End Debugging ---
+
+    // Check if the round is over (no non-static bodies left)
+    // Ensure initialBodyCount was set and first attempt was made to prevent premature round end
     if (
       nonStaticBodies.length === 0 && this.initialBodyCount > 0 &&
       this.firstAttemptMade
     ) {
-      this.isGameOver = true;
-      this.debugControl?.logEvent("GameState", {
-        message: "Game over! All bodies collected.",
+      this.debugControl?.logEvent("RoundState", { // Changed event type
+        // Clarified log message
+        message:
+          `Round ${this.currentRoundNumber} clear condition met! All bodies collected.`,
+        round: this.currentRoundNumber,
       });
 
-      // Show the game over modal
-      this.showGameOverModal();
-      this.audioManager.playSound("doorClose_4", 1.0); // Play sound on game over
+      // Determine round winner and update match score
+      if (this.gameMode === "single") {
+        this.player1RoundsWon++;
+        // Added current round scores to log
+        this.debugControl?.logEvent("RoundWin", {
+          round: this.currentRoundNumber,
+          winner: "Player 1 (Single Player)",
+          scoreP1: this.player1RoundsWon,
+          scoreP2: this.player2RoundsWon,
+        });
+      } else { // Two-player mode
+        if (this.lastPlayerToAttempt === 1) {
+          this.player1RoundsWon++;
+          // Added current round scores to log
+          this.debugControl?.logEvent("RoundWin", {
+            round: this.currentRoundNumber,
+            winner: 1,
+            scoreP1: this.player1RoundsWon,
+            scoreP2: this.player2RoundsWon,
+          });
+        } else {
+          this.player2RoundsWon++;
+          // Added current round scores to log
+          this.debugControl?.logEvent("RoundWin", {
+            round: this.currentRoundNumber,
+            winner: 2,
+            scoreP1: this.player1RoundsWon,
+            scoreP2: this.player2RoundsWon,
+          });
+        }
+      }
+
+      // Update the round score display
+      this.updateRoundScoreDisplay();
+      this.audioManager.playSound("doorClose_4", 1.0); // Play sound on round over
+
+      // Check if the match is over
+      if (this.checkMatchOver()) {
+        this.isMatchOver = true;
+        // Changed score keys for clarity
+        this.debugControl?.logEvent("MatchState", {
+          message: "Match over condition met.",
+          finalScoreP1: this.player1RoundsWon,
+          finalScoreP2: this.player2RoundsWon,
+        });
+        this.showMatchOverModal();
+      } else {
+        // Match not over, set up the next round
+        // Log the *next* round number for clarity
+        this.debugControl?.logEvent("RoundState", {
+          message: "Proceeding to next round setup.",
+          nextRound: this.currentRoundNumber + 1,
+        });
+        this.resetGame("nextRoundSetup");
+      }
     }
   }
 
   /**
-   * Restarts the game, showing the mode selection modal
+   * Checks if the match is over (Best of 7 condition met).
+   * @returns True if the match is over, false otherwise.
    */
-  private restartGame(): void {
-    // Hide the game over modal
-    this.hideGameOverModal();
-
-    // Reset game state completely, including mode selection
-    this.resetGame(false); // Pass false to reset state without showing start modal
-
-    // Call the engine restart callback if set
-    if (this.restartCallback) {
-      this.restartCallback();
+  private checkMatchOver(): boolean {
+    const matchOver = this.player1RoundsWon === 4 ||
+      this.player2RoundsWon === 4;
+    if (matchOver) {
+      this.debugControl?.logEvent("MatchCheck", {
+        message: "Match over condition check returned true.",
+        scoreP1: this.player1RoundsWon,
+        scoreP2: this.player2RoundsWon,
+      });
     }
-
-    // No longer show the start modal on restart
+    return matchOver;
   }
 
   /**
-   * Gets the current score (adapts based on mode, might need refinement)
-   * For now, returns total score in two-player mode.
-   * @returns The current score
+   * Gets the current score for the round (adapts based on mode)
+   * @returns The current score for the round
    */
   public getScore(): number {
     if (this.gameMode === "two") {
@@ -544,9 +635,8 @@ export class GameManager {
   }
 
   /**
-   * Gets the current number of attempts (adapts based on mode)
-   * For now, returns total attempts in two-player mode.
-   * @returns The current number of attempts
+   * Gets the current number of attempts for the round (adapts based on mode)
+   * @returns The current number of attempts for the round
    */
   public getAttempts(): number {
     if (this.gameMode === "two") {
@@ -556,7 +646,7 @@ export class GameManager {
   }
 
   /**
-   * Resets the score to zero
+   * Resets the score for the current round to zero
    */
   public resetScore(): void {
     this.score = 0;
@@ -566,7 +656,7 @@ export class GameManager {
   }
 
   /**
-   * Resets the number of attempts to zero
+   * Resets the number of attempts for the current round to zero
    */
   public resetAttempts(): void {
     this.attempts = 0;
@@ -576,31 +666,81 @@ export class GameManager {
   }
 
   /**
-   * Resets all game statistics and state
-   * @param fullRestart - If true, also resets gameMode for a complete restart.
+   * Resets the game state for either a new match or the next round.
+   * @param resetType - 'fullMatchRestart' or 'nextRoundSetup'
    */
-  public resetGame(fullRestart: boolean = false): void {
-    this.resetScore();
-    this.resetAttempts();
-    this.isGameOver = false;
-    this.firstAttemptMade = false; // Reset first attempt flag
-    this.currentPlayer = 1; // Reset to player 1
-    this.lastPlayerToAttempt = 1; // Reset last attempter
+  public resetGame(resetType: "fullMatchRestart" | "nextRoundSetup"): void {
+    // Added log at the start of the function
+    this.debugControl?.logEvent("GameReset", { type: resetType });
 
-    if (fullRestart) {
-      this.gameMode = null; // Reset mode only on full restart
+    // --- Reset Round State (Common to both reset types) ---
+    this.score = 0;
+    this.player1Score = 0;
+    this.player2Score = 0;
+    this.attempts = 0;
+    this.player1Attempts = 0;
+    this.player2Attempts = 0;
+    this.firstAttemptMade = false;
+    this.lastPlayerToAttempt = 1; // Reset last attempter for the round
+
+    // --- Reset based on type ---
+    if (resetType === "fullMatchRestart") {
+      this.hideMatchOverModal(); // Hide if visible
+      // REMOVED: this.gameMode = null; // Do NOT reset game mode on match restart
+      this.player1RoundsWon = 0;
+      this.player2RoundsWon = 0;
+      this.currentRoundNumber = 1;
+      this.startingPlayerThisRound = 1; // Player 1 always starts the match
+      this.currentPlayer = 1;
+      this.isMatchOver = false;
+      // Don't show start modal here unless gameMode was initially null
+      if (!this.gameMode) {
+        this.showGameStartModal();
+      } else {
+        // If mode already selected, directly start the first round setup
+        if (this.restartCallback) {
+          this.restartCallback();
+        } else {
+          this.debugControl?.logEvent("GameWarning", {
+            context: "resetGame(fullMatchRestart)",
+            message: "Restart callback not set.",
+          });
+        }
+      }
+    } else { // nextRoundSetup
+      this.currentRoundNumber++;
+      // Alternate starting player for the new round
+      this.startingPlayerThisRound = this.startingPlayerThisRound === 1 ? 2 : 1;
+      this.currentPlayer = this.startingPlayerThisRound;
+      // Changed event type and added startingPlayer info
+      this.debugControl?.logEvent("RoundState", {
+        message:
+          `Player ${this.currentPlayer} starts Round ${this.currentRoundNumber}.`,
+        startingPlayer: this.startingPlayerThisRound,
+      });
+
+      // Call the engine restart callback to clear board and add shapes for the new round
+      if (this.restartCallback) {
+        this.restartCallback();
+      } else {
+        // Added context to warning message
+        this.debugControl?.logEvent("GameWarning", {
+          context: "resetGame(nextRoundSetup)",
+          message: "Restart callback not set in GameManager.",
+        });
+      }
     }
 
-    // Update display after resetting
+    // --- Update UI (Common) ---
+    this.updateRoundScoreDisplay();
     this.updateScoreDisplay();
-    this.debugControl?.logEvent("GameState", { message: "Game state reset." });
   }
 
   /**
-   * Gets the AudioManager instance
-   * @returns The AudioManager instance
+   * Gets the AudioManager instance.
+   * @returns The AudioManager instance.
    */
-  public getAudioManager(): AudioManager {
+  public getAudioManager(): AudioManager { // Added method
     return this.audioManager;
   }
 }

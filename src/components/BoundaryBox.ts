@@ -22,6 +22,7 @@ export class BoundaryBox {
     private engine: Engine;
     // Array to store the box parts (walls)
     private boxParts: Matter.Body[] = [];
+    private bottomBox: Matter.Body | null = null; // Added property to store the bottom wall specifically
     // Width of the canvas/screen
     private width: number;
     // Height of the canvas/screen
@@ -123,7 +124,7 @@ export class BoundaryBox {
 
         // Create the bottom wall of the box
         // Create the bottom wall of the box using calculated center and dimensions
-        const bottomBox = Matter.Bodies.rectangle(
+        const bottomBox = Matter.Bodies.rectangle( // Assign to a property for later check
             boxCenterX, // X position (center of the bottom wall)
             boxCenterY + boxHeight / 2, // Y position (bottom edge of the box)
             boxWidth, // Width (same as box width)
@@ -173,7 +174,10 @@ export class BoundaryBox {
         );
 
         // Add all box parts to the array
-        this.boxParts.push(bottomBox, leftBox, rightBox);
+        this.boxParts.push(bottomBox, leftBox, rightBox); // Keep track of all parts
+        // Store bottomBox separately for specific collision check
+        this.bottomBox = bottomBox;
+        // Line 181 was a duplicate assignment, removed.
 
         // Add all box parts to the physics engine
         this.engine.addBody(this.boxParts);
@@ -219,28 +223,42 @@ export class BoundaryBox {
                     continue;
                 }
 
-                // Check if the body is inside the box
-                // Check if the other body's center is within the box bounds
-                if (
-                    Matter.Bounds.contains(this.boxBounds, otherBody.position)
-                ) {
+                // --- Pocketing Logic ---
+                // Check if the collision involves the specific bottomBox part
+                // Check if the collision involves the specific bottomBox part (and ensure it's not null)
+                const collidedWithBottom = this.bottomBox &&
+                    ((bodyA === this.bottomBox && bodyB === otherBody) ||
+                        (bodyB === this.bottomBox && bodyA === otherBody));
+
+                if (collidedWithBottom) {
                     // Log the event for debugging
-                    this.debugControl.logEvent("BodyEnteredBox", {
+                    this.debugControl.logEvent("BodyPocketed", {
                         bodyId: otherBody.id,
                     });
-                    // Call GameManager to handle scoring. It will decide whether to
-                    // add score or restart based on attempts and settling state.
+
+                    // Call GameManager to handle scoring
                     gameManager.addScore();
 
-                    // Remove the body from the world
-                    // Use setTimeout to avoid issues with modifying composite during collision event
+                    // Remove the body from the world using setTimeout to avoid modifying composite during collision event
+                    // Check round over *after* removal is confirmed.
                     setTimeout(() => {
-                        Matter.Composite.remove(
-                            this.engine.getWorld(),
-                            otherBody,
-                        );
-                        // Check if the game is over after removing the body
-                        gameManager.checkGameOver();
+                        // Double-check if the body still exists before removing
+                        if (this.engine.getWorld().bodies.includes(otherBody)) {
+                            Matter.Composite.remove(
+                                this.engine.getWorld(),
+                                otherBody,
+                            );
+                            this.debugControl?.logEvent("BodyRemoved", {
+                                bodyId: otherBody.id,
+                            });
+                            // Check if the round/match is over *after* removing the body
+                            gameManager.checkRoundOver();
+                        } else {
+                            this.debugControl?.logEvent("BodyRemoveSkipped", {
+                                bodyId: otherBody.id,
+                                reason: "Already removed",
+                            });
+                        }
                     }, 0);
                 }
             }

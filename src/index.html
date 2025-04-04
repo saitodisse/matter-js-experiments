@@ -11,7 +11,8 @@
 <body>
     <!-- Game Information Display -->
     <div id="game-info-container">
-        <div id="score-display">Score: 0/0</div>
+        <div id="round-score-display">P1: 0 | P2: 0</div> <!-- Added Round Score Display -->
+        <div id="score-display">Score: 0/0</div> <!-- Renamed from Attempts/Score -->
     </div>
 
     <!-- Game Start Modal -->
@@ -24,13 +25,13 @@
         </div>
     </div>
 
-    <!-- Game Over Modal -->
-    <div id="game-over-modal">
+    <!-- Match Over Modal -->
+    <div id="match-over-modal"> <!-- Renamed ID -->
         <div class="modal-content">
-            <h2>Game Over!</h2>
-            <p class="congrats-message">Congratulations! You've collected all objects!</p>
-            <pre id="final-score">Final Score: 0/0 (0%)</pre>
-            <button id="restart-button">Play Again</button>
+            <h2>Match Over!</h2> <!-- Updated Heading -->
+            <p class="congrats-message">Final Match Result:</p> <!-- Updated Message -->
+            <pre id="final-match-score">P1: 0 | P2: 0</pre> <!-- Updated ID and Placeholder Text -->
+            <button id="restart-button">New Match</button> <!-- Updated Button Text -->
         </div>
     </div>
 
