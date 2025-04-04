@@ -242,21 +242,21 @@ export class GameManager {
         ? Math.round((this.player2Score / this.player2Attempts) * 100)
         : 0;
       finalMessage =
-        `P1: ${this.player1Score}/${this.player1Attempts} (${p1Percentage}%) | P2: ${this.player2Score}/${this.player2Attempts} (${p2Percentage}%)`;
+        `P1: ${this.player1Score}/${this.player1Attempts} (${p1Percentage}%)\nP2: ${this.player2Score}/${this.player2Attempts} (${p2Percentage}%)`;
 
       // Determine winner
       if (p1Percentage > p2Percentage) {
-        finalMessage += " - Player 1 Wins!";
+        finalMessage += "\nPlayer 1 Wins!";
       } else if (p2Percentage > p1Percentage) {
-        finalMessage += " - Player 2 Wins!";
+        finalMessage += "\nPlayer 2 Wins!";
       } else {
         // Tie-breaker: lower attempts wins. If attempts are equal, it's a draw.
         if (this.player1Attempts < this.player2Attempts) {
-          finalMessage += " - Player 1 Wins (fewer attempts)!";
+          finalMessage += "\nPlayer 1 Wins (fewer attempts)!";
         } else if (this.player2Attempts < this.player1Attempts) {
-          finalMessage += " - Player 2 Wins (fewer attempts)!";
+          finalMessage += "\nPlayer 2 Wins (fewer attempts)!";
         } else {
-          finalMessage += " - It's a Draw!";
+          finalMessage += "\nIt's a Draw!";
         }
       }
     }
