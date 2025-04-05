@@ -1,12 +1,7 @@
-import { defineConfig } from 'vite';
-
-// https://vitejs.dev/config/
-export default defineConfig(({ command }) => {
-  return {
-    // Base public path when served in development or production
-    // Set the base path for GitHub Pages deployment
-    // Use '/matter-js-experiments/' for production builds, '/' for development
-    base: command === 'build' ? '/matter-js-experiments/' : '/',
+// vite.config.js
+export default {
+  // Base public path when served in development or production
+  base: './',
   // Configure server options
   server: {
     // Enable hot module replacement
@@ -23,5 +18,4 @@ export default defineConfig(({ command }) => {
   },
   // Specify the entry point
   root: 'src'
-  }
-});
+}

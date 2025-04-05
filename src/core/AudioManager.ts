@@ -43,6 +43,10 @@ export class AudioManager {
         }
 
         try {
+            if (import.meta.env.VITE_ROOT_URL_SUBFOLDER) {
+                url = import.meta.env.VITE_ROOT_URL_SUBFOLDER + url;
+            }
+
             this.debugControl?.logEvent("SoundLoadStart", { name, url }); // Added ?.
             const response = await fetch(url);
             if (!response.ok) {

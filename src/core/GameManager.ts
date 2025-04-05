@@ -278,11 +278,11 @@ export class GameManager {
     // Preload sounds
     this.audioManager.loadSound(
       "hit",
-      "/sounds/hammer-hitting-a-head-100624.mp3",
+      `${import.meta.env.BASE_URL}sounds/hammer-hitting-a-head-100624.mp3`,
     )
       .catch((error) => {
         const message =
-          "Failed to preload /sounds/hammer-hitting-a-head-100624.mp3";
+          `Failed to preload ${import.meta.env.BASE_URL}sounds/hammer-hitting-a-head-100624.mp3`;
         console.error(message, error); // Keep console.error for critical failures
         this.debugControl?.logEvent("AudioError", { message, error });
       }); // Fixed parenthesis placement
