@@ -537,9 +537,9 @@ export class GameManager {
     // Prevent scoring before the first attempt in any mode
     if (!this.firstAttemptMade) {
       this.debugControl?.logEvent("GameWarning", {
-        message: "Score added before first attempt. Restarting game.",
+        message: "Score added before first attempt. Restarting current round.", // Updated message
       });
-      this.resetGame("fullMatchRestart"); // Should not happen ideally, restart match
+      this.resetGame("currentRoundRestart"); // Restart only the current round
       return;
     }
 
@@ -733,7 +733,7 @@ export class GameManager {
    */
   public checkRoundOver(): void {
     this.debugControl?.logEvent("RoundCheckDeprecated", {
-      message: "checkRoundOver called (should be handled by addScore)",
+      message: "checkRoundOver called (logic now primarily in addScore)",
       round: this.currentRoundNumber,
     });
     // Original logic is now primarily within addScore's setTimeout callback
@@ -866,24 +866,28 @@ export class GameManager {
 
   /**
    * Resets the game state for either a new match or the next round.
-   * @param resetType - 'fullMatchRestart' or 'nextRoundSetup'
+   * @param resetType - 'fullMatchRestart', 'nextRoundSetup', or 'currentRoundRestart'
    */
-  public resetGame(resetType: "fullMatchRestart" | "nextRoundSetup"): void {
+  public resetGame(
+    resetType: "fullMatchRestart" | "nextRoundSetup" | "currentRoundRestart",
+  ): void {
     // Added log at the start of the function
     this.debugControl?.logEvent("GameReset", { type: resetType });
 
     // Record previous round result BEFORE resetting state if setting up next round
     // Moved this logic inside addScore's check to ensure it happens correctly
 
-    // --- Reset Round State (Common to both reset types) ---
-    this.score = 0;
-    this.player1Score = 0;
-    this.player2Score = 0;
-    this.attempts = 0;
-    this.player1Attempts = 0;
-    this.player2Attempts = 0;
-    this.firstAttemptMade = false;
-    this.lastPlayerToAttempt = 1; // Reset last attempter for the round
+    // --- Reset Round State (Common to 'nextRoundSetup' and 'currentRoundRestart') ---
+    if (resetType === "nextRoundSetup" || resetType === "currentRoundRestart") {
+      this.score = 0;
+      this.player1Score = 0;
+      this.player2Score = 0;
+      this.attempts = 0;
+      this.player1Attempts = 0;
+      this.player2Attempts = 0;
+      this.firstAttemptMade = false;
+      this.lastPlayerToAttempt = 1; // Reset last attempter for the round
+    }
 
     // --- Reset based on type ---
     if (resetType === "fullMatchRestart") {
@@ -900,13 +904,19 @@ export class GameManager {
       this.totalMatchScoreP1_2P = 0; // Clear total 2P scores
       this.totalMatchScoreP2_2P = 0;
 
+      // Reset round state as well for a full restart
+      this.resetScore();
+      this.resetAttempts();
+      this.firstAttemptMade = false;
+      this.lastPlayerToAttempt = 1;
+
       // Don't show start modal here unless gameMode was initially null
       if (!this.gameMode) {
         this.showGameStartModal();
       } else {
         // If mode already selected, directly start the first round setup
         if (this.restartCallback) {
-          this.restartCallback();
+          this.restartCallback(); // Reset board for round 1
         } else {
           this.debugControl?.logEvent("GameWarning", {
             context: "resetGame(fullMatchRestart)",
@@ -914,7 +924,7 @@ export class GameManager {
           });
         }
       }
-    } else { // nextRoundSetup
+    } else if (resetType === "nextRoundSetup") {
       this.currentRoundNumber++;
       // Alternate starting player for the new round
       this.startingPlayerThisRound = this.startingPlayerThisRound === 1 ? 2 : 1;
@@ -936,6 +946,23 @@ export class GameManager {
           message: "Restart callback not set in GameManager.",
         });
       }
+    } else if (resetType === "currentRoundRestart") {
+      // Reset current player to who started this round
+      this.currentPlayer = this.startingPlayerThisRound;
+      this.debugControl?.logEvent("RoundState", {
+        message:
+          `Restarting current round (${this.currentRoundNumber}). Player ${this.currentPlayer} starts.`,
+      });
+      // Call the engine restart callback to clear board and add shapes
+      if (this.restartCallback) {
+        this.restartCallback();
+      } else {
+        this.debugControl?.logEvent("GameWarning", {
+          context: "resetGame(currentRoundRestart)",
+          message: "Restart callback not set.",
+        });
+      }
+      // Note: Does NOT increment currentRoundNumber or change roundsWon/total scores
     }
 
     // --- Update UI (Common) ---
