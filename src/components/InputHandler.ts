@@ -68,12 +68,6 @@ export class InputHandler {
      * Sets up all event listeners
      */
     private setupEventListeners(): void {
-        // Mouse down event - triggered when a mouse button is pressed
-        this.canvas.addEventListener(
-            "mousedown",
-            (event) => this.handleMouseDown(event),
-        );
-
         // Mouse up event - triggered when a mouse button is released
         this.canvas.addEventListener(
             "mouseup",
@@ -84,12 +78,6 @@ export class InputHandler {
         this.canvas.addEventListener(
             "click",
             (event) => this.handleClick(event),
-        );
-
-        // Context menu event - triggered on right-click
-        this.canvas.addEventListener(
-            "contextmenu",
-            (event) => this.handleContextMenu(event),
         );
 
         // Mouse move event - triggered when the mouse moves
@@ -117,61 +105,6 @@ export class InputHandler {
             x: event.clientX - rect.left,
             y: event.clientY - rect.top,
         };
-    }
-
-    /**
-     * Handles mouse down events
-     *
-     * For right-click (button 2), removes non-static bodies at the click position.
-     *
-     * @param event - The mouse event
-     */
-    private handleMouseDown(event: MouseEvent): void {
-        // Log the mouse down event if debug mode is enabled
-        this.debugControl.logEvent("Mouse Down", {
-            x: event.clientX,
-            y: event.clientY,
-            button: event.button === 0
-                ? "Left"
-                : event.button === 1
-                ? "Middle"
-                : "Right",
-        });
-
-        // Handle right-click (button 2)
-        if (event.button === 2) {
-            // Find all bodies at the click position
-            const bodies = Matter.Query.point(this.engine.getAllBodies(), {
-                x: event.clientX,
-                y: event.clientY,
-            });
-
-            // Log the found bodies if debug mode is enabled
-            this.debugControl.logEvent("Query Bodies", {
-                bodies: bodies.map((body) => body.id),
-            });
-
-            // Remove all non-static bodies at the click position
-            for (const body of bodies) {
-                if (!body.isStatic) {
-                    // Log the removal if debug mode is enabled
-                    this.debugControl.logEvent("Object Removed", {
-                        id: body.id,
-                        type: body.circleRadius
-                            ? "Circle"
-                            : body.vertices
-                            ? "Polygon"
-                            : "Rectangle",
-                        position: {
-                            x: body.position.x,
-                            y: body.position.y,
-                        },
-                    });
-                    // Remove the body from the physics engine
-                    this.engine.removeBody(body);
-                }
-            }
-        }
     }
 
     /**
@@ -317,7 +250,7 @@ export class InputHandler {
             }
         } else {
             // If Ctrl key is pressed and no body was clicked, create a random body
-            if (event.ctrlKey) {
+            if (event.ctrlKey && this.debugControl.isEnabled() === true) {
                 const randomBody = this.bodyFactory.createRandomBody(
                     event.clientX,
                     event.clientY,
@@ -325,24 +258,6 @@ export class InputHandler {
                 this.engine.addBody(randomBody);
             }
         }
-    }
-
-    /**
-     * Handles context menu events (right-click)
-     *
-     * Prevents the default context menu from appearing.
-     *
-     * @param event - The mouse event
-     */
-    private handleContextMenu(event: MouseEvent): void {
-        // Prevent the default context menu from appearing
-        event.preventDefault();
-        // Log the right-click event if debug mode is enabled
-        this.debugControl.logEvent("Right Click - Object Removed", {
-            x: event.clientX,
-            y: event.clientY,
-            button: "Right",
-        });
     }
 
     /**
@@ -370,22 +285,11 @@ export class InputHandler {
                 button: button,
             });
 
-            // Handle right-click drag (remove bodies)
-            if (button === "Right") {
-                // Find all bodies at the current mouse position
-                const bodies = Matter.Query.point(this.engine.getAllBodies(), {
-                    x: event.clientX,
-                    y: event.clientY,
-                });
-
-                // Remove the first non-static body found
-                if (bodies.length > 0 && !bodies[0].isStatic) {
-                    this.engine.removeBody(bodies[0]);
-                }
-            }
-
-            // Handle Ctrl+Left-click drag (create bodies)
-            if (button === "Left" && event.ctrlKey) {
+            // Handle Ctrl+Left-click drag (create bodies) only in debug mode
+            if (
+                button === "Left" && event.ctrlKey &&
+                this.debugControl.isEnabled() === true
+            ) {
                 // Limit the creation rate to avoid creating too many bodies
                 const currentTime = Date.now();
                 if (
@@ -414,7 +318,7 @@ export class InputHandler {
      */
     private handleKeyDown(event: KeyboardEvent): void {
         // Handle Delete key press
-        if (event.key === "Delete") {
+        if (event.key === "Delete" && this.debugControl.isEnabled() === true) {
             // Get all bodies in the world
             const bodies = this.engine.getAllBodies();
             // Find and remove the first non-static body

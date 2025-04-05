@@ -7,7 +7,6 @@ This is a Matter.js physics simulation of a ball pool, now using Vite for develo
 - Interactive physics simulation with Matter.js
 - Debug mode toggle
 - Create balls by clicking
-- Remove balls with right-click
 - Create multiple balls by holding Ctrl + left mouse button
 - Responsive design that adapts to window size
 
