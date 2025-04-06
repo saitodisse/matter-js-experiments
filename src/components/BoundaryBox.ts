@@ -29,10 +29,10 @@ export class BoundaryBox {
     private height: number;
     // Box dimensions and position
     // Box dimensions and calculated bounds
-    private _boxDimensions: { width: number; height: number } | undefined; // Renamed to avoid TS6133
+    private boxDimensions: { width: number; height: number } | undefined;
     private boxBounds: Bounds | undefined; // Use Matter.js Bounds type
     // Reference to the game manager
-    private _gameManager: GameManager; // Renamed to avoid TS6133
+    private gameManager: GameManager;
     // Reference to the debug control
     private readonly debugControl: DebugControl; // Added
 
@@ -54,7 +54,7 @@ export class BoundaryBox {
         this.width = width;
         this.height = height;
         this.debugControl = debugControl; // Added
-        this._gameManager = GameManager.getInstance();
+        this.gameManager = GameManager.getInstance();
         this.createBoxParts(); // This will now calculate random position
         // this.setupCollisionDetection(); // Remove this - rely on handleCollision
         this.handleCollision();
@@ -81,7 +81,7 @@ export class BoundaryBox {
         // Define fixed dimensions for the box
         const boxWidth = 180;
         const boxHeight = 140;
-        this._boxDimensions = { width: boxWidth, height: boxHeight }; // Store fixed dimensions
+        this.boxDimensions = { width: boxWidth, height: boxHeight }; // Store fixed dimensions
 
         // --- Random Position Calculation ---
         const padding = 60; // Min distance from screen edges and boundary walls thickness
@@ -125,13 +125,15 @@ export class BoundaryBox {
             bounds: this.boxBounds,
         });
 
+        const WALL_THICKNESS = 20;
+
         // Create the bottom wall of the box
         // Create the bottom wall of the box using calculated center and dimensions
         const bottomBox = Matter.Bodies.rectangle( // Assign to a property for later check
             boxCenterX, // X position (center of the bottom wall)
             boxCenterY + boxHeight / 2, // Y position (bottom edge of the box)
             boxWidth, // Width (same as box width)
-            10, // Height (thickness of the wall) - increased thickness slightly
+            WALL_THICKNESS, // Height (thickness of the wall) - increased thickness slightly
             {
                 isStatic: true, // Make it a static body (doesn't move)
                 render: {
@@ -147,7 +149,7 @@ export class BoundaryBox {
         const leftBox = Matter.Bodies.rectangle(
             boxCenterX - boxWidth / 2, // X position (left edge of the box)
             boxCenterY, // Y position (center of the left wall)
-            10, // Width (thickness of the wall)
+            WALL_THICKNESS, // Width (thickness of the wall)
             boxHeight, // Height (same as box height)
             {
                 isStatic: true, // Make it a static body
@@ -164,7 +166,7 @@ export class BoundaryBox {
         const rightBox = Matter.Bodies.rectangle(
             boxCenterX + boxWidth / 2, // X position (right edge of the box)
             boxCenterY, // Y position (center of the right wall)
-            10, // Width (thickness of the wall)
+            WALL_THICKNESS, // Width (thickness of the wall)
             boxHeight, // Height (same as box height)
             {
                 isStatic: true, // Make it a static body

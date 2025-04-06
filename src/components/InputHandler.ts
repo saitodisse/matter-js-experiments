@@ -26,7 +26,7 @@ export class InputHandler {
     private bodyFactory: BodyFactory;
     private debugControl: DebugControl;
     // Mouse position
-    private _mousePosition: { x: number; y: number } = { x: 0, y: 0 }; // Renamed to avoid TS6133
+    private mousePosition: { x: number; y: number } = { x: 0, y: 0 };
     // Canvas element
     private canvas: HTMLCanvasElement;
     // Particle system for visual effects
@@ -139,7 +139,7 @@ export class InputHandler {
         // Get the mouse position relative to the canvas
         const mousePosition = this.getMousePosition(event);
         // Store the mouse position for use in other methods
-        this._mousePosition = mousePosition;
+        this.mousePosition = mousePosition;
 
         // Get all bodies in the simulation
         const allBodies = this.engine.getAllBodies();
@@ -166,7 +166,7 @@ export class InputHandler {
             // Calculate the force to apply (proportional to distance)
             const force = Matter.Vector.mult(
                 normalizedDirection,
-                distance * 0.015,
+                distance * 0.010,
             );
 
             this.debugControl.logEvent("Body Repelled", {
