@@ -52,7 +52,8 @@ export class AudioManager {
                     import.meta.env.VITE_ROOT_URL_SUBFOLDER,
                 name,
                 url,
-            }); // Added ?.
+            });
+
             const response = await fetch(url);
             if (!response.ok) {
                 throw new Error(
@@ -67,7 +68,12 @@ export class AudioManager {
             this.debugControl?.logEvent("SoundLoadSuccess", { name }); // Added ?.
         } catch (error) {
             console.error(`Error loading sound "${name}" from ${url}:`, error); // Keep console.error
-            this.debugControl?.logEvent("SoundLoadError", { name, url, error }); // Added ?.
+            this.debugControl?.logEvent("SoundLoadError", {
+                name,
+                url,
+                error,
+                "import.meta.env": import.meta.env,
+            });
         }
     }
 
