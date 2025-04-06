@@ -41,7 +41,7 @@ export class MatterParticleSystem {
         force: number,
     ) {
         const particleCount = Math.floor(5 + force * 10); // Adjust count based on force
-        const baseSpeed = 12.0 + force * 0.75; // Increased base speed and force multiplier for stronger effect
+        const baseSpeed = 8.0 + force * 2; // Increased base speed and force multiplier for stronger effect
         const baseTimestamp = this.matterEngine.timing.timestamp; // Define baseTimestamp here
         // Remove the old fixed expiryTime calculation
 
