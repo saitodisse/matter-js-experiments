@@ -296,7 +296,7 @@ export class BoundaryBox {
                     this.matterParticleSystem.createPocketExplosion(
                         explosionPosition,
                         explosionDirection,
-                        1, // Base force, can be adjusted
+                        2, // Increased base force for stronger explosion
                     );
                     // --- End Particle Explosion ---
 

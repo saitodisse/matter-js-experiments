@@ -45,7 +45,7 @@ export class MatterParticleSystem {
         force: number,
     ) {
         const particleCount = Math.floor(5 + force * 10); // Adjust count based on force
-        const baseSpeed = 0.5 + force * 0.5; // Adjust speed based on force
+        const baseSpeed = 1.0 + force * 0.75; // Increased base speed and force multiplier for stronger effect
         const expiryTime = this.matterEngine.timing.timestamp +
             this.PARTICLE_LIFESPAN_MS;
 
