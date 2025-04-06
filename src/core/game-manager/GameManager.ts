@@ -292,4 +292,11 @@ export class GameManager {
         return this.matchManager.getGameMode() !== null &&
             !this.matchManager.getIsMatchOver();
     }
+
+    /**
+     * Gets the current round number (delegated to MatchManager).
+     */
+    public getCurrentRoundNumber(): number {
+        return this.matchManager.getCurrentRoundNumber();
+    }
 }

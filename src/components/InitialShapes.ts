@@ -25,29 +25,36 @@ export class InitialShapes {
   private boundaryBox: BoundaryBox;
   private bodyFactory: BodyFactory;
   private debugControl: DebugControl;
+  private roundNumber: number; // Add round number property
 
   /**
    * InitialShapes constructor
    *
    * @param engine - Reference to the physics engine
    * @param boundaryBox - Reference to the boundary box instance
+   * @param bodyFactory - Factory for creating bodies
+   * @param debugControl - Debug control instance
+   * @param roundNumber - The current round number
    */
   constructor({
     engine,
     boundaryBox,
     bodyFactory,
     debugControl,
+    roundNumber, // Add roundNumber to parameters
   }: {
     engine: Engine;
     boundaryBox: BoundaryBox;
     bodyFactory: BodyFactory;
     debugControl: DebugControl;
+    roundNumber: number; // Add type for roundNumber
   }) {
     // Add boundaryBox parameter
     this.engine = engine;
     this.boundaryBox = boundaryBox; // Store boundaryBox reference
     this.bodyFactory = bodyFactory;
     this.debugControl = debugControl;
+    this.roundNumber = roundNumber; // Store round number
     this.createShapes();
   }
 
@@ -119,22 +126,59 @@ export class InitialShapes {
       return { x, y };
     };
 
-    // --- Create shapes with random safe positions ---
+    // --- Create shapes based on round number ---
     const shapeRadiusEstimate = 60; // Estimate for padding/distance checks
+    const shapesToCreate: Matter.Body[] = [];
 
-    // Create shape at a random safe position
-    function createNewShape(bodyFactory: BodyFactory) {
-      const bodyPos = generateSafePosition(shapeRadiusEstimate);
-      const body = bodyFactory.createRandomBody(bodyPos.x, bodyPos.y);
-      return body;
+    this.debugControl.logEvent("LevelSetup", {
+      round: this.roundNumber,
+      message: `Setting up shapes for round ${this.roundNumber}`,
+    });
+
+    switch (this.roundNumber) {
+      case 1:
+        // Level 1: One square
+        const pos1 = generateSafePosition(shapeRadiusEstimate);
+        shapesToCreate.push(
+          this.bodyFactory.createRectangle(pos1.x, pos1.y, 50, 50),
+        ); // Example size
+        break;
+      case 2:
+        // Level 2: One square, one hexagon
+        const pos2a = generateSafePosition(shapeRadiusEstimate);
+        shapesToCreate.push(
+          this.bodyFactory.createRectangle(pos2a.x, pos2a.y, 50, 50),
+        );
+        const pos2b = generateSafePosition(shapeRadiusEstimate);
+        shapesToCreate.push(
+          this.bodyFactory.createPolygon(pos2b.x, pos2b.y, 6, 40),
+        ); // Example size
+        break;
+      case 3:
+        // Level 3: 3 random shapes
+        for (let i = 0; i < 3; i++) {
+          const pos = generateSafePosition(shapeRadiusEstimate);
+          shapesToCreate.push(this.bodyFactory.createRandomBody(pos.x, pos.y));
+        }
+        break;
+      case 4:
+        // Level 4: 4 random shapes
+        for (let i = 0; i < 4; i++) {
+          const pos = generateSafePosition(shapeRadiusEstimate);
+          shapesToCreate.push(this.bodyFactory.createRandomBody(pos.x, pos.y));
+        }
+        break;
+      default:
+        // Level 5 and beyond: 5 random shapes
+        for (let i = 0; i < 5; i++) {
+          const pos = generateSafePosition(shapeRadiusEstimate);
+          shapesToCreate.push(this.bodyFactory.createRandomBody(pos.x, pos.y));
+        }
+        break;
     }
 
-    // Store all shapes in the array
-    this.shapes = [
-      createNewShape(this.bodyFactory),
-      createNewShape(this.bodyFactory),
-      createNewShape(this.bodyFactory),
-    ];
+    // Store all created shapes in the array
+    this.shapes = shapesToCreate;
     // Add all shapes to the physics engine
     this.engine.addBody(this.shapes);
     // The check for shapes falling in immediately will happen after a delay in main.ts

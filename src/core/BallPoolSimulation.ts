@@ -163,7 +163,8 @@ export class BallPoolSimulation {
             boundaryBox: this.boundaryBox,
             bodyFactory: this.bodyFactory,
             debugControl: this.debugControl,
-        }); // Pass boundaryBox
+            roundNumber: this.gameManager.getCurrentRoundNumber(), // Pass current round number
+        });
 
         // Count and set the initial bodies again
         this.countAndSetInitialBodies();
