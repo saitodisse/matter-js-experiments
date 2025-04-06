@@ -11,20 +11,16 @@ export class MatterParticleSystem {
     private matterEngine: Matter.Engine;
     private world: Matter.World;
     private particles: ParticleInfo[] = [];
-    private readonly PARTICLE_LIFESPAN_MS = 3000; // 3 seconds
-    private readonly PARTICLE_RADIUS = 2;
-    private readonly PARTICLE_OPTIONS: Matter.IBodyDefinition = {
+    private readonly PARTICLE_BASE_LIFESPAN_MS = 3000; // Base lifespan 3 seconds
+    private readonly PARTICLE_BASE_RADIUS = 2; // Base radius
+    private readonly FIRE_COLORS = ["#FF0000", "#FFA500", "#FFFF00"]; // Red, Orange, Yellow
+    private readonly BASE_PARTICLE_PHYSICS_OPTIONS: Matter.IBodyDefinition = {
         restitution: 0.4,
         friction: 0.6,
-        frictionAir: 0.05, // Add some air friction
+        frictionAir: 0.05,
         collisionFilter: {
             category: CATEGORY_EFFECT_PARTICLE,
             mask: CATEGORY_WALL, // Only collide with walls
-        },
-        render: {
-            fillStyle: "#FFA500", // Orange color for particles
-            strokeStyle: "#AF7500",
-            lineWidth: 1,
         },
     };
 
@@ -45,9 +41,9 @@ export class MatterParticleSystem {
         force: number,
     ) {
         const particleCount = Math.floor(5 + force * 10); // Adjust count based on force
-        const baseSpeed = 1.0 + force * 0.75; // Increased base speed and force multiplier for stronger effect
-        const expiryTime = this.matterEngine.timing.timestamp +
-            this.PARTICLE_LIFESPAN_MS;
+        const baseSpeed = 12.0 + force * 0.75; // Increased base speed and force multiplier for stronger effect
+        const baseTimestamp = this.matterEngine.timing.timestamp; // Define baseTimestamp here
+        // Remove the old fixed expiryTime calculation
 
         // Normalize the primary direction
         const normalizedDirection = Matter.Vector.normalise(direction);
@@ -60,30 +56,53 @@ export class MatterParticleSystem {
                 angleOffset,
             );
 
-            // Vary speed slightly
+            // Vary speed
             const speed = baseSpeed * (0.8 + Math.random() * 0.4);
             const velocity = Matter.Vector.mult(particleDirection, speed);
+
+            // Vary size
+            const radius = this.PARTICLE_BASE_RADIUS *
+                (0.7 + Math.random() * 0.6);
+
+            // Vary color
+            const color = Matter.Common.choose(this.FIRE_COLORS);
+
+            // Vary lifespan
+            const lifespan = this.PARTICLE_BASE_LIFESPAN_MS *
+                (0.8 + Math.random() * 0.4);
+            const expiryTime = baseTimestamp + lifespan; // Now baseTimestamp is defined
 
             // Create the particle body slightly offset from the center
             const spawnOffset = Matter.Vector.mult(
                 particleDirection,
-                this.PARTICLE_RADIUS * 2,
-            );
+                radius * 2,
+            ); // Use variable radius
             const spawnPosition = Matter.Vector.add(position, spawnOffset);
+
+            // Combine base physics options with specific render/size options
+            const particleOptions: Matter.IBodyDefinition = {
+                ...this.BASE_PARTICLE_PHYSICS_OPTIONS,
+                render: {
+                    fillStyle: color,
+                    // Optional: derive strokeStyle or keep it simple
+                    strokeStyle: "#000", // Use black border instead of non-existent shadeColor
+                    lineWidth: 1,
+                },
+            };
 
             const particleBody = Matter.Bodies.circle(
                 spawnPosition.x,
                 spawnPosition.y,
-                this.PARTICLE_RADIUS,
-                this.PARTICLE_OPTIONS,
+                radius, // Use variable radius
+                particleOptions,
             );
 
             // Apply initial velocity
             Matter.Body.setVelocity(particleBody, velocity);
 
-            // Add to world and track
+            // Add to world and track with its specific expiry time
             Matter.Composite.add(this.world, particleBody);
-            this.particles.push({ body: particleBody, expiryTime });
+            this.particles.push({ body: particleBody, expiryTime: expiryTime }); // Use variable expiryTime
         }
     }
 
