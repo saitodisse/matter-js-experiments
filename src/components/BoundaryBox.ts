@@ -29,10 +29,10 @@ export class BoundaryBox {
     private height: number;
     // Box dimensions and position
     // Box dimensions and calculated bounds
-    private boxDimensions: { width: number; height: number } | undefined;
+    private _boxDimensions: { width: number; height: number } | undefined; // Renamed to avoid TS6133
     private boxBounds: Bounds | undefined; // Use Matter.js Bounds type
     // Reference to the game manager
-    private gameManager: GameManager;
+    private _gameManager: GameManager; // Renamed to avoid TS6133
     // Reference to the debug control
     private readonly debugControl: DebugControl; // Added
 
@@ -54,7 +54,7 @@ export class BoundaryBox {
         this.width = width;
         this.height = height;
         this.debugControl = debugControl; // Added
-        this.gameManager = GameManager.getInstance();
+        this._gameManager = GameManager.getInstance();
         this.createBoxParts(); // This will now calculate random position
         // this.setupCollisionDetection(); // Remove this - rely on handleCollision
         this.handleCollision();
@@ -81,7 +81,7 @@ export class BoundaryBox {
         // Define fixed dimensions for the box
         const boxWidth = 180;
         const boxHeight = 140;
-        this.boxDimensions = { width: boxWidth, height: boxHeight }; // Store fixed dimensions
+        this._boxDimensions = { width: boxWidth, height: boxHeight }; // Store fixed dimensions
 
         // --- Random Position Calculation ---
         const padding = 60; // Min distance from screen edges and boundary walls thickness

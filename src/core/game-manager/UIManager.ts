@@ -102,11 +102,11 @@ export class UIManager {
         // Add click event listeners for game start
         this.onePlayerButton.addEventListener("click", () => {
             this.audioManager.playSound("plop_02", 0.7);
-            this.onStartGame("single");
+            this.onStartGame(GameMode.Single);
         });
         this.twoPlayerButton.addEventListener("click", () => {
             this.audioManager.playSound("plop_02", 0.7);
-            this.onStartGame("two");
+            this.onStartGame(GameMode.Two);
         });
 
         // Get references to match over modal elements

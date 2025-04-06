@@ -20,7 +20,7 @@
     "vite": "^5.0.0"
   },
   "dependencies": {
-    "matter-js": "^0.20.0"
+    "matter-js": "^0.20.0",
+    "typescript": "^5.8.3"
   }
 }
-

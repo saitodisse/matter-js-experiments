@@ -1,8 +1,10 @@
 import * as Matter from "matter-js";
 
-// Extend the Window interface to include our custom property
-interface Window {
-    lastCreationTime?: number;
+// Augment the global Window interface to include our custom property
+declare global {
+    interface Window {
+        lastCreationTime?: number;
+    }
 }
 
 export interface SimulationOptions {

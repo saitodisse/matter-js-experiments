@@ -5,7 +5,7 @@
  * in the physics simulation. These shapes serve as starting objects for the user to interact with.
  */
 
-import Matter, { Bounds } from "matter-js";
+import Matter from "matter-js";
 import { Engine } from "../core/Engine";
 import { BoundaryBox } from "./BoundaryBox"; // Import BoundaryBox
 import { DebugControl } from "./DebugControl";
@@ -58,16 +58,16 @@ export class InitialShapes {
    * with specific properties and adds them to the physics simulation.
    */
   private createShapes(): void {
-    const screenWidth =
-      this.engine.getRender().options.width ?? window.innerWidth;
-    const screenHeight =
-      this.engine.getRender().options.height ?? window.innerHeight;
+    const screenWidth = this.engine.getRender().options.width ??
+      window.innerWidth;
+    const screenHeight = this.engine.getRender().options.height ??
+      window.innerHeight;
     const boxBounds = this.boundaryBox.getBounds();
     const safeDistance = 30; // Minimum distance from the box edges
 
     // Helper function to generate a safe random position
     const generateSafePosition = (
-      shapeRadius: number
+      shapeRadius: number,
     ): { x: number; y: number } => {
       let x: number;
       let y: number;
@@ -81,7 +81,7 @@ export class InitialShapes {
 
         if (maxCounter > 100) {
           throw new Error(
-            `generateSafePosition cannot place new object. Try to make window bigger.`
+            `generateSafePosition cannot place new object. Try to make window bigger.`,
           );
         }
 
@@ -94,8 +94,8 @@ export class InitialShapes {
         const exclusionZoneMaxX = boxBounds.max.x + safeDistance;
 
         // Check if the point falls within the combined exclusion zone
-        const isHorizontallyUnsafe =
-          x >= exclusionZoneMinX && x <= exclusionZoneMaxX;
+        const isHorizontallyUnsafe = x >= exclusionZoneMinX &&
+          x <= exclusionZoneMaxX;
 
         // The position is unsafe ONLY if it's within BOTH the horizontal AND vertical exclusion zones
         const isUnsafe = isHorizontallyUnsafe;

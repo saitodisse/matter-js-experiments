@@ -25,8 +25,8 @@ export class DebugControl {
     // Matter.js components
     private render: Matter.Render;
     private engine: Matter.Engine;
-    private mouse: Matter.Mouse;
-    private mouseConstraint: Matter.MouseConstraint;
+    private mouse!: Matter.Mouse;
+    private mouseConstraint!: Matter.MouseConstraint;
 
     // State and callbacks
     private isDebugMode: boolean;

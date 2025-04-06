@@ -26,9 +26,9 @@ export class BallPoolSimulation {
     private particleSystem: ParticleSystem;
 
     //
-    private boundaryWalls!: BoundaryWalls;
+    // private boundaryWalls!: BoundaryWalls; // Removed as unused TS6133
     private boundaryBox!: BoundaryBox;
-    private initialShapes!: InitialShapes;
+    // private initialShapes!: InitialShapes; // Removed as unused TS6133
     private inputHandler: InputHandler;
     /**
      * BallPoolSimulation constructor
@@ -138,7 +138,7 @@ export class BallPoolSimulation {
         Matter.Composite.clear(this.engine.getWorld(), false); // Keep static property false to remove everything
 
         // Re-create the boundary walls
-        this.boundaryWalls = new BoundaryWalls(
+        new BoundaryWalls( // Instance not stored as it's unused TS6133
             this.engine,
             window.innerWidth,
             window.innerHeight,
@@ -153,7 +153,7 @@ export class BallPoolSimulation {
         );
 
         // Re-create the initial shapes
-        this.initialShapes = new InitialShapes({
+        new InitialShapes({ // Instance not stored as it's unused TS6133
             engine: this.engine,
             boundaryBox: this.boundaryBox,
             bodyFactory: this.bodyFactory,

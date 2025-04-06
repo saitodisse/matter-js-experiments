@@ -23,7 +23,7 @@ export class MatchManager {
     private restartCallback: (() => void) | null = null;
 
     // Match State
-    private gameMode: GameMode = null;
+    private gameMode: GameMode | null = null;
     private player1RoundsWon: number = 0;
     private player2RoundsWon: number = 0;
     private currentRoundNumber: number = 1;
@@ -260,7 +260,7 @@ export class MatchManager {
             : this.rankingManager.getRanking2PIndividual();
 
         this.uiManager.showMatchOverModal(
-            this.gameMode,
+            this.gameMode!,
             this.player1RoundsWon,
             this.player2RoundsWon,
             this.totalMatchScore1P, // Pass 1P total score
@@ -348,12 +348,12 @@ export class MatchManager {
      */
     private updateUI(): void {
         this.uiManager.updateRoundScoreDisplay(
-            this.gameMode,
+            this.gameMode!,
             this.currentRoundNumber,
             this.player1RoundsWon, // Pass P1 rounds for 1P display logic
         );
         this.uiManager.updateMatchScoreDisplay(
-            this.gameMode,
+            this.gameMode!,
             this.player1RoundsWon,
             this.player2RoundsWon,
         );
@@ -366,6 +366,13 @@ export class MatchManager {
     }
 
     public getGameMode(): GameMode {
+        if (!this.gameMode) {
+            this.debugControl?.logEvent("GameWarning", {
+                context: "getGameMode",
+                message: "Game mode not set. Defaulting to Single Player.",
+            });
+            return GameMode.Single;
+        }
         return this.gameMode;
     }
 

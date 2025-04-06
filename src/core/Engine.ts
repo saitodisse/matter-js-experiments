@@ -8,7 +8,7 @@
 
 import Matter from "matter-js";
 import { SimulationInstance, SimulationOptions } from "../types";
-import { GameManager } from "./GameManager"; // Import GameManager
+// import { GameManager } from "./GameManager"; // Removed as unused TS6133
 import { DebugControl } from "../components/DebugControl"; // Added
 import { AudioManager } from "./AudioManager"; // Added
 /**
@@ -28,8 +28,8 @@ export class Engine {
     private runner: Matter.Runner; // The runner for updating the simulation
 
     // Mouse interaction components
-    private mouse: Matter.Mouse;
-    private mouseConstraint: Matter.MouseConstraint;
+    // private mouse: Matter.Mouse; // Removed as unused TS2564
+    // private mouseConstraint: Matter.MouseConstraint; // Removed as unused TS2564
 
     // Optional components
     private debugControl?: DebugControl; // Added
@@ -190,24 +190,7 @@ export class Engine {
         return this.render.canvas;
     }
 
-    /**
-     * Gets the Matter.js mouse instance
-     *
-     * @returns The Matter.js mouse instance
-     */
-    public getMouse(): Matter.Mouse {
-        return this.mouse;
-    }
-
-    /**
-     * Gets the Matter.js mouse constraint instance
-     *
-     * @returns The Matter.js mouse constraint instance
-     */
-    public getMouseConstraint(): Matter.MouseConstraint {
-        return this.mouseConstraint;
-    }
-
+    // Removed getMouse() and getMouseConstraint() as properties were removed
     /**
      * Gets a simplified object containing the main simulation components
      *
