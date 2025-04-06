@@ -43,13 +43,11 @@ export class AudioManager {
         }
 
         try {
-            if (import.meta.env.VITE_ROOT_URL_SUBFOLDER) {
-                url = import.meta.env.VITE_ROOT_URL_SUBFOLDER + url;
+            if (import.meta.env.PROD) {
+                url = "/matter-js-experiments" + url;
             }
 
             this.debugControl?.logEvent("SoundLoadStart", {
-                "import.meta.env.VITE_ROOT_URL_SUBFOLDER":
-                    import.meta.env.VITE_ROOT_URL_SUBFOLDER,
                 name,
                 url,
             });
@@ -72,7 +70,6 @@ export class AudioManager {
                 name,
                 url,
                 error,
-                "import.meta.env": import.meta.env,
             });
         }
     }
