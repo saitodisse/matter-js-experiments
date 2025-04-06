@@ -255,7 +255,14 @@ export class BoundaryBox {
                 }
 
                 // --- Pocketing Logic ---
-                // Check if the collision involves the specific bottomBox part
+                // Ignore pocketing logic if the colliding body is an effect particle
+                if (
+                    otherBody.collisionFilter?.category ===
+                        CATEGORY_EFFECT_PARTICLE
+                ) {
+                    continue;
+                }
+
                 // Check if the collision involves the specific bottomBox part (and ensure it's not null)
                 const collidedWithBottom = this.bottomBox &&
                     ((bodyA === this.bottomBox && bodyB === otherBody) ||
