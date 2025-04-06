@@ -7,10 +7,14 @@
  */
 
 import Matter from "matter-js";
-import { SimulationInstance, SimulationOptions } from "../types";
+import {
+    CATEGORY_EFFECT_PARTICLE,
+    SimulationInstance,
+    SimulationOptions,
+} from "../types"; // Import particle category
 // import { GameManager } from "./GameManager"; // Removed as unused TS6133
-import { DebugControl } from "../components/DebugControl"; // Added
-import { AudioManager } from "./AudioManager"; // Added
+import { DebugControl } from "../components/DebugControl";
+import { AudioManager } from "./AudioManager";
 /**
  * Engine Class
  *
@@ -218,10 +222,19 @@ export class Engine {
 
         Matter.Events.on(this.engine, "collisionStart", (event) => {
             event.pairs.forEach((pair) => {
-                // Check if the collision involves at least one non-static body
-                // This prevents sounds for static-static interactions if any existed
+                // Skip sound/log if either body is an effect particle
+                if (
+                    pair.bodyA.collisionFilter?.category ===
+                        CATEGORY_EFFECT_PARTICLE ||
+                    pair.bodyB.collisionFilter?.category ===
+                        CATEGORY_EFFECT_PARTICLE
+                ) {
+                    return;
+                }
+
+                // Skip if both are static (original check, still useful)
                 if (pair.bodyA.isStatic && pair.bodyB.isStatic) {
-                    return; // Skip if both are static
+                    return;
                 }
 
                 // Calculate relative velocity magnitude

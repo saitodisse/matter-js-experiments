@@ -9,6 +9,7 @@ import { AudioManager } from "../AudioManager";
 import { UIManager } from "./UIManager";
 import { DebugControl } from "../../components/DebugControl";
 import { GameMode } from "./types";
+import { CATEGORY_EFFECT_PARTICLE } from "../../types"; // Import particle category
 
 export class RoundManager {
     private engine: Engine | null = null;
@@ -157,7 +158,10 @@ export class RoundManager {
 
         const nonStaticBodies = Matter.Composite.allBodies(
             this.engine.getWorld(),
-        ).filter((body) => !body.isStatic);
+        ).filter((body) =>
+            !body.isStatic &&
+            body.collisionFilter?.category !== CATEGORY_EFFECT_PARTICLE // Exclude effect particles
+        );
         const bodiesRemaining = nonStaticBodies.length;
 
         this.debugControl?.logEvent("CheckRoundOverValues", {
