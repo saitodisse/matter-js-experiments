@@ -29,8 +29,8 @@ export class BoundaryBox {
     private height: number;
     // Box dimensions and position
     // Box dimensions and calculated bounds
-    private boxDimensions: { width: number; height: number };
-    private boxBounds: Bounds; // Use Matter.js Bounds type
+    private boxDimensions: { width: number; height: number } | undefined;
+    private boxBounds: Bounds | undefined; // Use Matter.js Bounds type
     // Reference to the game manager
     private gameManager: GameManager;
     // Reference to the debug control
@@ -65,6 +65,9 @@ export class BoundaryBox {
      * @returns The bounds object { min: { x, y }, max: { x, y } }
      */
     public getBounds(): Bounds {
+        if (!this.boxBounds) {
+            throw new Error("Box bounds not calculated");
+        }
         return this.boxBounds;
     }
 
@@ -252,7 +255,7 @@ export class BoundaryBox {
                                 bodyId: otherBody.id,
                             });
                             // Check if the round/match is over *after* removing the body
-                            gameManager.checkRoundOver();
+                            // Round/match over check is now handled internally by RoundManager/MatchManager after score update
                         } else {
                             this.debugControl?.logEvent("BodyRemoveSkipped", {
                                 bodyId: otherBody.id,

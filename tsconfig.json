@@ -15,7 +15,7 @@
     "noImplicitReturns": true,
     "skipLibCheck": true,
     /* Vite specific */
-    "types": ["vite/client"]
+    "types": ["vite/client"],
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts"],
   "references": [{ "path": "./tsconfig.node.json" }] // Often needed for Vite config itself

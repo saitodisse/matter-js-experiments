@@ -18,7 +18,7 @@ export class RoundManager {
     private onRoundEndCallback: (scoringPlayer: 1 | 2) => void;
 
     // Round State
-    private gameMode: GameMode = null;
+    private gameMode: GameMode | null = null;
     private score: number = 0; // Single player score per round
     private attempts: number = 0; // Single player attempts per round
     private player1Score: number = 0; // Player 1 score per round
@@ -111,7 +111,7 @@ export class RoundManager {
         }
 
         const scoringPlayer = this.lastPlayerToAttempt;
-        if (this.gameMode === "single") {
+        if (this.gameMode === GameMode.Single) {
             this.score += points;
             this.debugControl?.logEvent("PlayerAction", {
                 action: "score",
@@ -119,7 +119,7 @@ export class RoundManager {
                 value: this.score,
                 round: this.currentRoundNumber,
             });
-        } else if (this.gameMode === "two") {
+        } else if (this.gameMode === GameMode.Two) {
             if (scoringPlayer === 1) {
                 this.player1Score += points;
                 this.debugControl?.logEvent("PlayerAction", {
@@ -196,7 +196,7 @@ export class RoundManager {
             });
         }
 
-        if (this.gameMode === "single") {
+        if (this.gameMode === GameMode.Single) {
             this.attempts += count;
             this.debugControl?.logEvent("PlayerAction", {
                 action: "attempt",
@@ -205,7 +205,7 @@ export class RoundManager {
                 round: this.currentRoundNumber,
             });
             this.lastPlayerToAttempt = 1;
-        } else if (this.gameMode === "two") {
+        } else if (this.gameMode === GameMode.Two) {
             this.lastPlayerToAttempt = this.currentPlayer; // Store before switching
             if (this.currentPlayer === 1) {
                 this.player1Attempts += count;
@@ -240,6 +240,13 @@ export class RoundManager {
      * Updates the UI elements related to the round state.
      */
     private updateUI(): void {
+        if (this.gameMode === null) {
+            this.debugControl?.logEvent("UIWarning", {
+                message: "updateUI called with null gameMode. Skipping.",
+                round: this.currentRoundNumber,
+            });
+            return; // Don't update UI if game mode isn't set
+        }
         // Note: Round number and match score are handled by MatchManager/UIManager directly
         this.uiManager.updateScoreDisplay(
             this.gameMode,
@@ -256,10 +263,10 @@ export class RoundManager {
     // --- Getters for MatchManager ---
     public getCurrentRoundStats() {
         return {
-            scoreP1: this.gameMode === "single"
+            scoreP1: this.gameMode === GameMode.Single
                 ? this.score
                 : this.player1Score,
-            attemptsP1: this.gameMode === "single"
+            attemptsP1: this.gameMode === GameMode.Single
                 ? this.attempts
                 : this.player1Attempts,
             scoreP2: this.player2Score,

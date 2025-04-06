@@ -30,7 +30,7 @@ export class GameManager {
 
     // Other State
     private restartCallback: (() => void) | null = null;
-    private gameMode: GameMode = null; // Keep track of selected mode before match starts
+    private gameMode: GameMode | null = null; // Keep track of selected mode before match starts
 
     /**
      * Private constructor to enforce singleton pattern

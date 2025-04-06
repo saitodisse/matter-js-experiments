@@ -5,7 +5,11 @@
  */
 
 // Define game modes
-export type GameMode = "single" | "two" | null;
+export enum GameMode {
+    Single = "single",
+    Two = "two",
+    None = "none",
+}
 
 // Define structure for round history
 export interface RoundResult {
