@@ -163,15 +163,27 @@ export class InputHandler {
             const normalizedDirection = Matter.Vector.normalise(direction);
             // Calculate the distance between the mouse and the body
             const distance = Matter.Vector.magnitude(direction);
+            let scalarForce = distance * 0.013;
+
+            // change scalarForce based on body area
+            if (clickedBody.area) {
+                // when area is large, scalarForce is strong
+                // when area is small, scalarForce is weak
+                scalarForce = scalarForce * (clickedBody.area / 1000); // Proportional to area (baseline 1000)
+            }
+
             // Calculate the force to apply (proportional to distance)
             const force = Matter.Vector.mult(
                 normalizedDirection,
-                distance * 0.013,
+                scalarForce,
             );
 
             this.debugControl.logEvent("Body Repelled", {
                 id: clickedBody.id,
                 clickedBody,
+                clickedBodyArea: clickedBody.area,
+                "(distance / clickedBody.area)": (distance / clickedBody.area),
+                scalarForce: scalarForce,
                 type: clickedBody.circleRadius
                     ? "Circle"
                     : clickedBody.vertices
