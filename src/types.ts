@@ -33,3 +33,8 @@ export interface SimulationInstance {
     canvas: HTMLCanvasElement;
     stop: () => void;
 }
+
+// Collision Categories
+export const CATEGORY_GAME_SHAPE = 0x0001;
+export const CATEGORY_WALL = 0x0002;
+export const CATEGORY_EFFECT_PARTICLE = 0x0004;

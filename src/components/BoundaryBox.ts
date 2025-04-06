@@ -9,7 +9,13 @@ import Matter from "matter-js";
 import { Engine } from "../core/Engine";
 import { GameManager } from "../core/GameManager";
 import { Bounds } from "matter-js";
-import { DebugControl } from "./DebugControl"; // Added
+import { DebugControl } from "./DebugControl";
+import { MatterParticleSystem } from "../effects/MatterParticleSystem"; // Import the new system
+import {
+    CATEGORY_EFFECT_PARTICLE,
+    CATEGORY_GAME_SHAPE,
+    CATEGORY_WALL,
+} from "../types";
 /**
  * BoundaryBox Class
  *
@@ -34,7 +40,9 @@ export class BoundaryBox {
     // Reference to the game manager
     private gameManager: GameManager;
     // Reference to the debug control
-    private readonly debugControl: DebugControl; // Added
+    private readonly debugControl: DebugControl;
+    // Reference to the Matter particle system
+    private matterParticleSystem: MatterParticleSystem;
 
     /**
      * BoundaryBox constructor
@@ -42,18 +50,21 @@ export class BoundaryBox {
      * @param engine - Reference to the physics engine
      * @param width - Width of the canvas/screen
      * @param height - Height of the canvas/screen
-     * @param debugControl - Reference to the debug control instance // Added
+     * @param debugControl - Reference to the debug control instance
+     * @param matterParticleSystem - Reference to the Matter particle system instance
      */
     constructor(
         engine: Engine,
         width: number,
         height: number,
         debugControl: DebugControl,
-    ) { // Added debugControl
+        matterParticleSystem: MatterParticleSystem, // Add parameter
+    ) {
         this.engine = engine;
         this.width = width;
         this.height = height;
-        this.debugControl = debugControl; // Added
+        this.debugControl = debugControl;
+        this.matterParticleSystem = matterParticleSystem; // Store the instance
         this.gameManager = GameManager.getInstance();
         this.createBoxParts(); // This will now calculate random position
         // this.setupCollisionDetection(); // Remove this - rely on handleCollision
@@ -136,6 +147,11 @@ export class BoundaryBox {
             WALL_THICKNESS, // Height (thickness of the wall) - increased thickness slightly
             {
                 isStatic: true, // Make it a static body (doesn't move)
+                collisionFilter: {
+                    category: CATEGORY_WALL,
+                    mask: CATEGORY_GAME_SHAPE | CATEGORY_WALL |
+                        CATEGORY_EFFECT_PARTICLE, // Collide with shapes, walls, particles
+                },
                 render: {
                     fillStyle: "#060a19", // Dark blue fill color
                     strokeStyle: "#000", // Black border
@@ -153,6 +169,11 @@ export class BoundaryBox {
             boxHeight, // Height (same as box height)
             {
                 isStatic: true, // Make it a static body
+                collisionFilter: {
+                    category: CATEGORY_WALL,
+                    mask: CATEGORY_GAME_SHAPE | CATEGORY_WALL |
+                        CATEGORY_EFFECT_PARTICLE, // Collide with shapes, walls, particles
+                },
                 render: {
                     fillStyle: "#060a19", // Dark blue fill color
                     strokeStyle: "#000", // Black border
@@ -170,6 +191,11 @@ export class BoundaryBox {
             boxHeight, // Height (same as box height)
             {
                 isStatic: true, // Make it a static body
+                collisionFilter: {
+                    category: CATEGORY_WALL,
+                    mask: CATEGORY_GAME_SHAPE | CATEGORY_WALL |
+                        CATEGORY_EFFECT_PARTICLE, // Collide with shapes, walls, particles
+                },
                 render: {
                     fillStyle: "#060a19", // Dark blue fill color
                     strokeStyle: "#000", // Black border
@@ -243,6 +269,29 @@ export class BoundaryBox {
 
                     // Call GameManager to handle scoring
                     gameManager.addScore();
+
+                    // --- Trigger Particle Explosion ---
+                    const explosionPosition = otherBody.position;
+                    // The normal points from bodyA to bodyB. We want the direction *away* from the bottomBox.
+                    let explosionDirection = pair.collision.normal;
+                    if (bodyA === otherBody) {
+                        // Normal points from bottomBox to otherBody (away from wall) - Use directly
+                    } else {
+                        // Normal points from otherBody to bottomBox (towards wall) - Negate it
+                        explosionDirection = Matter.Vector.neg(
+                            explosionDirection,
+                        );
+                    }
+                    // Ensure the direction points generally upwards (negative y)
+                    if (explosionDirection.y > 0) {
+                        explosionDirection.y *= -1;
+                    }
+                    this.matterParticleSystem.createPocketExplosion(
+                        explosionPosition,
+                        explosionDirection,
+                        1, // Base force, can be adjusted
+                    );
+                    // --- End Particle Explosion ---
 
                     // Remove the body from the world using setTimeout to avoid modifying composite during collision event
                     // Check round over *after* removal is confirmed.

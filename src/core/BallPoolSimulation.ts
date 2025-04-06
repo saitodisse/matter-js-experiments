@@ -7,7 +7,8 @@ import { InitialShapes } from "../components/InitialShapes";
 import { InputHandler } from "../components/InputHandler";
 import { Engine } from "./Engine";
 import { GameManager } from "./GameManager";
-import { ParticleSystem } from "../effects/ParticleSystem";
+import { ParticleSystem } from "../effects/ParticleSystem"; // Keep for now, might be used elsewhere
+import { MatterParticleSystem } from "../effects/MatterParticleSystem"; // Import new system
 import { BodyWrapper } from "../utils/BodyWrapper";
 
 /**
@@ -23,7 +24,8 @@ export class BallPoolSimulation {
     private bodyFactory: BodyFactory;
     private bodyWrapper: BodyWrapper;
     private gameManager: GameManager;
-    private particleSystem: ParticleSystem;
+    private particleSystem: ParticleSystem; // Visual-only particles
+    private matterParticleSystem: MatterParticleSystem; // Physics-based particles
 
     //
     // private boundaryWalls!: BoundaryWalls; // Removed as unused TS6133
@@ -90,9 +92,11 @@ export class BallPoolSimulation {
         this.particleSystem = new ParticleSystem(
             this.engine.getRender().context,
         );
+        // Initialize Matter Particle System
+        this.matterParticleSystem = new MatterParticleSystem(this.engine);
 
-        // Pass ParticleSystem to InputHandler
-        this.inputHandler.setParticleSystem(this.particleSystem); // Add this method to InputHandler later
+        // Pass ParticleSystem to InputHandler (if still needed)
+        this.inputHandler.setParticleSystem(this.particleSystem); // Assuming InputHandler still uses the visual one
 
         // Set up the screen wrapping functionality
         this.setupBodyWrapping();
@@ -150,6 +154,7 @@ export class BallPoolSimulation {
             window.innerWidth,
             window.innerHeight,
             this.debugControl,
+            this.matterParticleSystem, // Pass the MatterParticleSystem instance
         );
 
         // Re-create the initial shapes
@@ -181,8 +186,10 @@ export class BallPoolSimulation {
                 (lastTimestamp || currentTimestamp); // Handle first frame
             lastTimestamp = currentTimestamp;
 
-            // Update Particle System
+            // Update Visual Particle System
             this.particleSystem.update(deltaTime);
+            // Update Matter Particle System
+            this.matterParticleSystem.update(); // Uses internal engine timestamp
 
             // Get all bodies in the simulation
             const allBodies = this.engine.getAllBodies();

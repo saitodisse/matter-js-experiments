@@ -7,7 +7,7 @@
  */
 
 import Matter from "matter-js";
-import { BodyOptions } from "../types";
+import { BodyOptions, CATEGORY_GAME_SHAPE, CATEGORY_WALL } from "../types"; // Import categories
 import { DebugControl } from "./DebugControl";
 
 /**
@@ -51,6 +51,11 @@ export class BodyFactory {
             restitution: options.restitution || 0.8,
             // Define friction (resistance to movement when in contact with other bodies)
             friction: options.friction || 0.1,
+            // Collision filtering: Game shapes collide with walls and other game shapes
+            collisionFilter: {
+                category: CATEGORY_GAME_SHAPE,
+                mask: CATEGORY_WALL | CATEGORY_GAME_SHAPE,
+            },
             // Visual settings for the body
             render: {
                 // Fill color (randomly chooses from shades of red if not specified)
@@ -102,6 +107,11 @@ export class BodyFactory {
             restitution: options.restitution || 0.8,
             // Define friction
             friction: options.friction || 0.1,
+            // Collision filtering: Game shapes collide with walls and other game shapes
+            collisionFilter: {
+                category: CATEGORY_GAME_SHAPE,
+                mask: CATEGORY_WALL | CATEGORY_GAME_SHAPE,
+            },
             // Visual settings for the body
             render: {
                 // Fill color (randomly chooses from shades of green if not specified)
@@ -153,6 +163,11 @@ export class BodyFactory {
             restitution: options.restitution || 0.8,
             // Define friction
             friction: options.friction || 0.1,
+            // Collision filtering: Game shapes collide with walls and other game shapes
+            collisionFilter: {
+                category: CATEGORY_GAME_SHAPE,
+                mask: CATEGORY_WALL | CATEGORY_GAME_SHAPE,
+            },
             // Visual settings for the body
             render: {
                 // Fill color (randomly chooses from shades of blue if not specified)
