@@ -166,7 +166,7 @@ export class InputHandler {
             // Calculate the force to apply (proportional to distance)
             const force = Matter.Vector.mult(
                 normalizedDirection,
-                distance * 0.010,
+                distance * 0.013,
             );
 
             this.debugControl.logEvent("Body Repelled", {

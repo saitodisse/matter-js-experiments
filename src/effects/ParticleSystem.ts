@@ -17,7 +17,7 @@ export class ParticleSystem {
     createExplosion(x: number, y: number, force: number) {
         const particleCount = Math.floor(10 + force * 10); // More force = more particles
         const baseSpeed = 1 + force * 0.5; // More force = higher base speed
-        const baseLife = 500 + force * 50; // More force = slightly longer life
+        const baseLife = 700 + force * 50; // More force = slightly longer life
         const baseSize = 1 + force * 0.2; // More force = slightly larger base size
 
         for (let i = 0; i < particleCount; i++) {
