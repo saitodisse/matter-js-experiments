@@ -299,4 +299,11 @@ export class GameManager {
     public getCurrentRoundNumber(): number {
         return this.matchManager.getCurrentRoundNumber();
     }
+
+    /**
+     * Checks if the first attempt has been made in the current round (delegated to RoundManager).
+     */
+    public isFirstAttemptMade(): boolean {
+        return this.roundManager.isFirstAttemptMade();
+    }
 }

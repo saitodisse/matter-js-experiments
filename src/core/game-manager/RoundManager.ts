@@ -285,4 +285,8 @@ export class RoundManager {
     public getStartingPlayer(): 1 | 2 {
         return this.startingPlayerThisRound;
     }
+
+    public isFirstAttemptMade(): boolean {
+        return this.firstAttemptMade;
+    }
 }

@@ -269,58 +269,76 @@ export class BoundaryBox {
                         (bodyB === this.bottomBox && bodyA === otherBody));
 
                 if (collidedWithBottom) {
-                    // Log the event for debugging
-                    this.debugControl.logEvent("BodyPocketed", {
-                        bodyId: otherBody.id,
-                    });
+                    // *** FIX: Only process pocketing if the first attempt has been made ***
+                    if (gameManager.isFirstAttemptMade()) {
+                        // Log the event for debugging
+                        this.debugControl.logEvent("BodyPocketed", {
+                            bodyId: otherBody.id,
+                            firstAttemptMade: true,
+                        });
 
-                    // Call GameManager to handle scoring
-                    gameManager.addScore();
+                        // Call GameManager to handle scoring
+                        gameManager.addScore();
 
-                    // --- Trigger Particle Explosion ---
-                    const explosionPosition = otherBody.position;
-                    // The normal points from bodyA to bodyB. We want the direction *away* from the bottomBox.
-                    let explosionDirection = pair.collision.normal;
-                    if (bodyA === otherBody) {
-                        // Normal points from bottomBox to otherBody (away from wall) - Use directly
-                    } else {
-                        // Normal points from otherBody to bottomBox (towards wall) - Negate it
-                        explosionDirection = Matter.Vector.neg(
-                            explosionDirection,
-                        );
-                    }
-                    // Ensure the direction points generally upwards (negative y)
-                    if (explosionDirection.y > 0) {
-                        explosionDirection.y *= -1;
-                    }
-                    this.matterParticleSystem.createPocketExplosion(
-                        explosionPosition,
-                        explosionDirection,
-                        2, // Increased base force for stronger explosion
-                    );
-                    // --- End Particle Explosion ---
-
-                    // Remove the body from the world using setTimeout to avoid modifying composite during collision event
-                    // Check round over *after* removal is confirmed.
-                    setTimeout(() => {
-                        // Double-check if the body still exists before removing
-                        if (this.engine.getWorld().bodies.includes(otherBody)) {
-                            Matter.Composite.remove(
-                                this.engine.getWorld(),
-                                otherBody,
-                            );
-                            this.debugControl?.logEvent("BodyRemoved", {
-                                bodyId: otherBody.id,
-                            });
-                            // Check if the round/match is over *after* removing the body
-                            // Round/match over check is now handled internally by RoundManager/MatchManager after score update
+                        // --- Trigger Particle Explosion ---
+                        const explosionPosition = otherBody.position;
+                        // The normal points from bodyA to bodyB. We want the direction *away* from the bottomBox.
+                        let explosionDirection = pair.collision.normal;
+                        if (bodyA === otherBody) {
+                            // Normal points from bottomBox to otherBody (away from wall) - Use directly
                         } else {
-                            this.debugControl?.logEvent("BodyRemoveSkipped", {
-                                bodyId: otherBody.id,
-                                reason: "Already removed",
-                            });
+                            // Normal points from otherBody to bottomBox (towards wall) - Negate it
+                            explosionDirection = Matter.Vector.neg(
+                                explosionDirection,
+                            );
                         }
-                    }, 0);
+                        // Ensure the direction points generally upwards (negative y)
+                        if (explosionDirection.y > 0) {
+                            explosionDirection.y *= -1;
+                        }
+                        this.matterParticleSystem.createPocketExplosion(
+                            explosionPosition,
+                            explosionDirection,
+                            2, // Increased base force for stronger explosion
+                        );
+                        // --- End Particle Explosion ---
+
+                        // Remove the body from the world using setTimeout to avoid modifying composite during collision event
+                        // Check round over *after* removal is confirmed.
+                        setTimeout(() => {
+                            // Double-check if the body still exists before removing
+                            if (
+                                this.engine.getWorld().bodies.includes(
+                                    otherBody,
+                                )
+                            ) {
+                                Matter.Composite.remove(
+                                    this.engine.getWorld(),
+                                    otherBody,
+                                );
+                                this.debugControl?.logEvent("BodyRemoved", {
+                                    bodyId: otherBody.id,
+                                });
+                                // Check if the round/match is over *after* removing the body
+                                // Round/match over check is now handled internally by RoundManager/MatchManager after score update
+                            } else {
+                                this.debugControl?.logEvent(
+                                    "BodyRemoveSkipped",
+                                    {
+                                        bodyId: otherBody.id,
+                                        reason: "Already removed",
+                                    },
+                                );
+                            }
+                        }, 0);
+                    } else {
+                        // Log that pocketing was ignored because the first attempt wasn't made
+                        this.debugControl.logEvent("BodyPocketIgnored", {
+                            bodyId: otherBody.id,
+                            reason: "First attempt not made yet",
+                        });
+                        // Do NOT remove the body or add score
+                    }
                 }
             }
         });
