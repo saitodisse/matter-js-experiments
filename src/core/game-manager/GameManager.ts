@@ -11,6 +11,7 @@ import { UIManager } from "./UIManager";
 import { RankingManager } from "./RankingManager";
 import { RoundManager } from "./RoundManager";
 import { MatchManager } from "./MatchManager";
+import Matter from "matter-js"; // Import Matter for Body type
 import { GameMode, GameResetType } from "./types"; // Keep GameResetType for now, might simplify
 
 export class GameManager {
@@ -305,5 +306,23 @@ export class GameManager {
      */
     public isFirstAttemptMade(): boolean {
         return this.roundManager.isFirstAttemptMade();
+    }
+
+    /**
+     * Handles the situation where a body is pocketed before the first attempt.
+     * Delegates to MatchManager to restart the current round.
+     * @param prematurelyPocketedBody The body that was pocketed too early.
+     */
+    public handlePrematurePocketing(
+        prematurelyPocketedBody: Matter.Body,
+    ): void {
+        this.debugControl?.logEvent("GameWarning", {
+            message:
+                "Premature pocketing detected. Delegating round restart to MatchManager.",
+            bodyId: prematurelyPocketedBody.id,
+            round: this.matchManager.getCurrentRoundNumber(),
+        });
+        // We might not need to pass the body if the board reset handles cleanup
+        this.matchManager.restartCurrentRound(prematurelyPocketedBody);
     }
 }

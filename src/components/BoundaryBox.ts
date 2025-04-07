@@ -332,12 +332,18 @@ export class BoundaryBox {
                             }
                         }, 0);
                     } else {
-                        // Log that pocketing was ignored because the first attempt wasn't made
-                        this.debugControl.logEvent("BodyPocketIgnored", {
-                            bodyId: otherBody.id,
-                            reason: "First attempt not made yet",
-                        });
-                        // Do NOT remove the body or add score
+                        // *** FIX: Trigger round restart if pocketed before first attempt ***
+                        this.debugControl.logEvent(
+                            "PrematurePocketingDetected",
+                            {
+                                bodyId: otherBody.id,
+                                reason:
+                                    "First attempt not made yet. Triggering round restart.",
+                            },
+                        );
+                        // Call GameManager to handle the restart
+                        gameManager.handlePrematurePocketing(otherBody);
+                        // Do NOT remove the body or add score here; restart handles cleanup.
                     }
                 }
             }

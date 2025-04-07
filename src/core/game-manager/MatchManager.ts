@@ -4,6 +4,7 @@
  * Manages the state and logic for the overall game match, including multiple rounds,
  * match scoring, history, and interaction with ranking and UI for match-level events.
  */
+import Matter from "matter-js"; // Import Matter for Body type
 import { UIManager } from "./UIManager";
 import { RankingManager } from "./RankingManager";
 import { RoundManager } from "./RoundManager"; // To get round stats
@@ -369,6 +370,37 @@ export class MatchManager {
         } else {
             this.debugControl?.logEvent("GameWarning", {
                 context: "prepareNextRound",
+                message: "Restart callback not set.",
+            });
+        }
+    }
+
+    /**
+     * Restarts the current round due to premature pocketing.
+     * Resets round state and triggers board reset.
+     * @param _prematurelyPocketedBody - The body that caused the issue (optional, for logging).
+     */
+    public restartCurrentRound(_prematurelyPocketedBody?: Matter.Body): void {
+        if (this.isMatchOver) return; // Don't restart if match is already over
+
+        this.debugControl?.logEvent("RoundRestart", {
+            message:
+                `Restarting current round (${this.currentRoundNumber}) due to premature pocketing.`,
+            round: this.currentRoundNumber,
+            startingPlayer: this.startingPlayerThisRound, // Keep the same starter
+            // bodyId: _prematurelyPocketedBody?.id // Optional logging
+        });
+
+        // Reset the round state using the *same* starting player
+        this.roundManager.resetRoundState(this.startingPlayerThisRound);
+        this.updateUI(); // Update UI to reflect reset state
+
+        // Trigger the board reset
+        if (this.restartCallback) {
+            this.restartCallback();
+        } else {
+            this.debugControl?.logEvent("GameWarning", {
+                context: "restartCurrentRound",
                 message: "Restart callback not set.",
             });
         }
