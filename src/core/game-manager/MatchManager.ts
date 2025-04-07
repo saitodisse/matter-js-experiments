@@ -255,17 +255,48 @@ export class MatchManager {
             this.recordRoundResult();
         }
 
-        const rankingData = this.gameMode === "single"
-            ? this.rankingManager.getRanking1P()
-            : this.rankingManager.getRanking2PIndividual();
+        let canSaveScoreP1 = false;
+        let canSaveScoreP2 = false;
+        let rankingData: RankingEntry1P[] | RankingEntry2PIndividual[];
+
+        if (this.gameMode === "single") {
+            canSaveScoreP1 = this.rankingManager.isTopScore1P(
+                this.totalMatchScore1P,
+            );
+            rankingData = this.rankingManager.getRanking1P();
+            this.debugControl?.logEvent("RankingCheck", {
+                mode: "1P",
+                score: this.totalMatchScore1P,
+                canSave: canSaveScoreP1,
+            });
+        } else { // two
+            canSaveScoreP1 = this.rankingManager.isTopScore2PIndividual(
+                this.totalMatchScoreP1_2P,
+            );
+            canSaveScoreP2 = this.rankingManager.isTopScore2PIndividual(
+                this.totalMatchScoreP2_2P,
+            );
+            rankingData = this.rankingManager.getRanking2PIndividual();
+            this.debugControl?.logEvent("RankingCheck", {
+                mode: "2P",
+                scoreP1: this.totalMatchScoreP1_2P,
+                canSaveP1: canSaveScoreP1,
+                scoreP2: this.totalMatchScoreP2_2P,
+                canSaveP2: canSaveScoreP2,
+            });
+        }
 
         this.uiManager.showMatchOverModal(
             this.gameMode!,
             this.player1RoundsWon,
             this.player2RoundsWon,
-            this.totalMatchScore1P, // Pass 1P total score
+            this.totalMatchScore1P, // Still needed for display in 1P
+            this.totalMatchScoreP1_2P, // Pass P1 score for 2P
+            this.totalMatchScoreP2_2P, // Pass P2 score for 2P
             this.roundHistory,
             rankingData,
+            canSaveScoreP1, // Pass flag for P1
+            canSaveScoreP2, // Pass flag for P2 (relevant in 2P)
         );
     }
 

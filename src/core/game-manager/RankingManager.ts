@@ -81,6 +81,17 @@ export class RankingManager {
         return updatedRankings; // Return the potentially updated rankings
     }
 
+    /**
+     * Checks if a score qualifies for the Top 3 in 1P mode without saving.
+     */
+    public isTopScore1P(score: number): boolean {
+        const rankings = this.getRanking1P();
+        return (
+            rankings.length < this.RANKING_MAX_ENTRIES ||
+            score > (rankings[this.RANKING_MAX_ENTRIES - 1]?.score ?? -1)
+        );
+    }
+
     // --- 2 Player Individual Ranking ---
 
     public getRanking2PIndividual(): RankingEntry2PIndividual[] {
@@ -150,5 +161,16 @@ export class RankingManager {
             });
         }
         return updatedRankings; // Return the potentially updated rankings
+    }
+
+    /**
+     * Checks if a score qualifies for the Top 3 in 2P Individual mode without saving.
+     */
+    public isTopScore2PIndividual(score: number): boolean {
+        const rankings = this.getRanking2PIndividual();
+        return (
+            rankings.length < this.RANKING_MAX_ENTRIES ||
+            score > (rankings[this.RANKING_MAX_ENTRIES - 1]?.score ?? -1)
+        );
     }
 }

@@ -249,22 +249,29 @@ export class UIManager {
         player1RoundsWon: number,
         player2RoundsWon: number,
         totalMatchScore1P: number, // For 1P final score display
+        totalMatchScoreP1_2P: number, // For 2P P1 final score display
+        totalMatchScoreP2_2P: number, // For 2P P2 final score display
         roundHistory: RoundResult[],
         rankingData: RankingEntry1P[] | RankingEntry2PIndividual[], // Combined type
+        canSaveScoreP1: boolean, // New: Flag to show P1 input
+        canSaveScoreP2: boolean, // New: Flag to show P2 input (only relevant in 2P)
     ): void {
         let finalMessage = "";
-        let showSaveOption = false;
+        // Determine if *any* save option should be shown (at least one player qualifies)
+        const showAnySaveOption = (gameMode === "single" && canSaveScoreP1) ||
+            (gameMode === "two" && (canSaveScoreP1 || canSaveScoreP2));
 
         if (gameMode === "single") {
             finalMessage = `Match Complete! Final Score: ${totalMatchScore1P}`;
-            showSaveOption = true;
+            // showSaveOption is determined by canSaveScoreP1 via showAnySaveOption
         } else if (gameMode === "two") {
             const winner = player1RoundsWon > player2RoundsWon
                 ? "Player 1"
                 : "Player 2";
             finalMessage =
-                `${winner} Wins the Match!\nFinal Score: ${player1RoundsWon} - ${player2RoundsWon}`;
-            showSaveOption = true;
+                `${winner} Wins the Match! (${player1RoundsWon} - ${player2RoundsWon})\n` +
+                `P1 Score: ${totalMatchScoreP1_2P} | P2 Score: ${totalMatchScoreP2_2P}`;
+            // showSaveOption is determined by canSaveScoreP1 || canSaveScoreP2 via showAnySaveOption
         }
 
         this.finalMatchScoreElement.textContent = finalMessage;
@@ -287,27 +294,39 @@ export class UIManager {
             this.rankingDisplayElement.style.display = "block";
         }
 
-        // Show/Hide Name Inputs and Save Button
+        // Show/Hide Name Inputs and Save Button based on qualification
         if (this.playerNameInputContainer) {
-            this.playerNameInputContainer.style.display = showSaveOption
+            this.playerNameInputContainer.style.display = showAnySaveOption
                 ? "block"
                 : "none";
         }
+
+        // Player 1 Input
         if (this.playerNameInput1) {
-            this.playerNameInput1.style.display = showSaveOption
+            this.playerNameInput1.style.display = canSaveScoreP1
                 ? "inline-block"
                 : "none";
             this.playerNameInput1.value = ""; // Clear previous input
+            this.playerNameInput1.placeholder = canSaveScoreP1
+                ? "P1 Name (Top 3!)"
+                : "";
         }
+
+        // Player 2 Input (only in 2P mode)
         if (this.playerNameInput2) {
             this.playerNameInput2.style.display =
-                (showSaveOption && gameMode === "two")
+                (gameMode === "two" && canSaveScoreP2)
                     ? "inline-block"
                     : "none";
             this.playerNameInput2.value = ""; // Clear previous input
+            this.playerNameInput2.placeholder = canSaveScoreP2
+                ? "P2 Name (Top 3!)"
+                : "";
         }
+
+        // Save Button (show if any player can save)
         if (this.saveScoreButton) {
-            this.saveScoreButton.style.display = showSaveOption
+            this.saveScoreButton.style.display = showAnySaveOption
                 ? "inline-block"
                 : "none";
         }
