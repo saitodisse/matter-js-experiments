@@ -8,6 +8,7 @@ import { DebugControl } from "../../components/DebugControl";
 import { AudioManager } from "../AudioManager";
 import {
     GameMode,
+    MatchLengthMode,
     RankingEntry1P,
     RankingEntry2PIndividual,
     RoundResult,
@@ -27,6 +28,10 @@ export class UIManager {
     private gameStartModal!: HTMLElement;
     private onePlayerButton!: HTMLElement;
     private twoPlayerButton!: HTMLElement;
+    private gameModeSelection!: HTMLElement;
+    private bestOf3Button!: HTMLElement;
+    private bestOf5Button!: HTMLElement;
+    private bestOf7Button!: HTMLElement;
 
     // Match over modal elements
     private matchOverModal!: HTMLElement;
@@ -38,6 +43,10 @@ export class UIManager {
     private playerNameInput2: HTMLInputElement | null = null;
     private saveScoreButton: HTMLElement | null = null;
     private rankingDisplayElement: HTMLElement | null = null;
+
+    // Selected game options
+    private selectedGameMode: GameMode | null = null;
+    private selectedMatchLengthMode: MatchLengthMode = MatchLengthMode.BestOf7; // Default to Best of 7
 
     // Callbacks for button actions
     private onStartGame: (mode: GameMode) => void;
@@ -98,15 +107,46 @@ export class UIManager {
         this.twoPlayerButton = document.getElementById(
             "two-player-button",
         ) as HTMLElement;
+        this.gameModeSelection = document.getElementById(
+            "game-mode-selection",
+        ) as HTMLElement;
+        this.bestOf3Button = document.getElementById(
+            "best-of-3-button",
+        ) as HTMLElement;
+        this.bestOf5Button = document.getElementById(
+            "best-of-5-button",
+        ) as HTMLElement;
+        this.bestOf7Button = document.getElementById(
+            "best-of-7-button",
+        ) as HTMLElement;
 
-        // Add click event listeners for game start
+        // Add click event listeners for player selection
         this.onePlayerButton.addEventListener("click", () => {
             this.audioManager.playSound("plop_02", 0.7);
-            this.onStartGame(GameMode.Single);
+            this.selectedGameMode = GameMode.Single;
+            this.showGameModeSelection();
         });
         this.twoPlayerButton.addEventListener("click", () => {
             this.audioManager.playSound("plop_02", 0.7);
-            this.onStartGame(GameMode.Two);
+            this.selectedGameMode = GameMode.Two;
+            this.showGameModeSelection();
+        });
+
+        // Add click event listeners for game mode selection
+        this.bestOf3Button.addEventListener("click", () => {
+            this.audioManager.playSound("plop_02", 0.7);
+            this.selectedMatchLengthMode = MatchLengthMode.BestOf3;
+            this.startGameWithSelectedOptions();
+        });
+        this.bestOf5Button.addEventListener("click", () => {
+            this.audioManager.playSound("plop_02", 0.7);
+            this.selectedMatchLengthMode = MatchLengthMode.BestOf5;
+            this.startGameWithSelectedOptions();
+        });
+        this.bestOf7Button.addEventListener("click", () => {
+            this.audioManager.playSound("plop_02", 0.7);
+            this.selectedMatchLengthMode = MatchLengthMode.BestOf7;
+            this.startGameWithSelectedOptions();
         });
 
         // Get references to match over modal elements
@@ -159,18 +199,36 @@ export class UIManager {
     }
 
     /**
-     * Updates the round score display (Best of 7)
+     * Updates the round score display based on the match length mode
      */
     public updateRoundScoreDisplay(
         gameMode: GameMode,
         currentRoundNumber: number,
         player1RoundsWon: number,
     ): void {
+        // Get the match length mode from the GameManager
+        const gameManager = (window as any).gameManagerInstance;
+        let matchLengthMode = MatchLengthMode.BestOf7; // Default
+
+        if (gameManager && gameManager.matchManager && gameManager.matchManager.getMatchLengthMode) {
+            matchLengthMode = gameManager.matchManager.getMatchLengthMode();
+        }
+
+        // Format the match mode text
+        let matchModeText = "";
+        if (matchLengthMode === MatchLengthMode.BestOf3) {
+            matchModeText = "Best of 3";
+        } else if (matchLengthMode === MatchLengthMode.BestOf5) {
+            matchModeText = "Best of 5";
+        } else {
+            matchModeText = "Best of 7";
+        }
+
         if (gameMode === "single") {
             this.roundScoreElement.textContent =
-                `Round: ${currentRoundNumber} | Won: ${player1RoundsWon}`;
+                `${matchModeText} | Round: ${currentRoundNumber} | Won: ${player1RoundsWon}`;
         } else if (gameMode === "two") {
-            this.roundScoreElement.textContent = `Round ${currentRoundNumber}`;
+            this.roundScoreElement.textContent = `${matchModeText} | Round ${currentRoundNumber}`;
         } else {
             this.roundScoreElement.textContent = ""; // Hide before game start
         }
@@ -229,6 +287,12 @@ export class UIManager {
      * Shows the game start modal with options for number of players
      */
     public showGameStartModal(): void {
+        // Reset to initial state
+        this.gameModeSelection.style.display = "none";
+        this.onePlayerButton.style.display = "block";
+        this.twoPlayerButton.style.display = "block";
+
+        // Show the modal
         this.gameStartModal.style.opacity = "1";
         this.gameStartModal.style.pointerEvents = "auto";
     }
@@ -239,6 +303,40 @@ export class UIManager {
     public hideGameStartModal(): void {
         this.gameStartModal.style.opacity = "0";
         this.gameStartModal.style.pointerEvents = "none";
+    }
+
+    /**
+     * Shows the game mode selection (Best of 3, 5, 7)
+     */
+    private showGameModeSelection(): void {
+        // Hide player selection buttons
+        this.onePlayerButton.style.display = "none";
+        this.twoPlayerButton.style.display = "none";
+
+        // Show game mode selection
+        this.gameModeSelection.style.display = "block";
+    }
+
+    /**
+     * Starts the game with the selected options
+     */
+    private startGameWithSelectedOptions(): void {
+        if (!this.selectedGameMode) {
+            this.debugControl?.logEvent("UIWarning", {
+                message: "Attempted to start game without selecting game mode.",
+            });
+            return;
+        }
+
+        // Inform GameManager about the selected match length mode
+        // This needs to be done through the GameManager instance
+        const gameManager = (window as any).gameManagerInstance;
+        if (gameManager && typeof gameManager.setMatchLengthMode === 'function') {
+            gameManager.setMatchLengthMode(this.selectedMatchLengthMode);
+        }
+
+        // Start the game with the selected player mode
+        this.onStartGame(this.selectedGameMode);
     }
 
     /**

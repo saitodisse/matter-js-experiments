@@ -12,7 +12,7 @@ import { RankingManager } from "./RankingManager";
 import { RoundManager } from "./RoundManager";
 import { MatchManager } from "./MatchManager";
 import Matter from "matter-js"; // Import Matter for Body type
-import { GameMode, GameResetType } from "./types"; // Keep GameResetType for now, might simplify
+import { GameMode, GameResetType, MatchLengthMode } from "./types"; // Keep GameResetType for now, might simplify
 
 export class GameManager {
     // Singleton instance
@@ -74,6 +74,8 @@ export class GameManager {
     public static getInstance(): GameManager {
         if (!GameManager.instance) {
             GameManager.instance = new GameManager();
+            // Expose the instance globally for UI access
+            (window as any).gameManagerInstance = GameManager.instance;
         }
         return GameManager.instance;
     }
@@ -164,6 +166,17 @@ export class GameManager {
         });
         this.debugControl?.logEvent("System", {
             message: "Preloading sounds.",
+        });
+    }
+
+    /**
+     * Sets the match length mode (Best of 3, 5, or 7).
+     * This method is called by UIManager via the global instance.
+     */
+    public setMatchLengthMode(mode: MatchLengthMode): void {
+        this.matchManager.setMatchLengthMode(mode);
+        this.debugControl?.logEvent("GameState", {
+            message: `Match length mode set to ${mode}.`,
         });
     }
 

@@ -24,6 +24,15 @@
             <p class="congrats-message">select the number of players</p>
             <button id="one-player-button">One Player</button>
             <button id="two-player-button">Two Player</button>
+
+            <div id="game-mode-selection" style="display: none; margin-top: 20px;">
+                <p class="congrats-message">select game mode</p>
+                <div class="game-mode-buttons">
+                    <button id="best-of-3-button">Best of 3</button>
+                    <button id="best-of-5-button">Best of 5</button>
+                    <button id="best-of-7-button">Best of 7</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -46,8 +55,10 @@
 
             <!-- Added Name Input and Save Button Area -->
             <div id="player-name-input-container" style="display: none; margin-top: 15px;">
-                <input type="text" id="player-name-input-1" placeholder="Enter Name P1" maxlength="15" style="display: none;">
-                <input type="text" id="player-name-input-2" placeholder="Enter Name P2" maxlength="15" style="display: none; margin-left: 5px;">
+                <input type="text" id="player-name-input-1" placeholder="Enter Name P1" maxlength="15"
+                    style="display: none;">
+                <input type="text" id="player-name-input-2" placeholder="Enter Name P2" maxlength="15"
+                    style="display: none; margin-left: 5px;">
                 <button id="save-score-button" style="display: none; margin-left: 10px;">Save Score</button>
             </div>
 

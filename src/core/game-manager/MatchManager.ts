@@ -11,6 +11,7 @@ import { RoundManager } from "./RoundManager"; // To get round stats
 import { DebugControl } from "../../components/DebugControl";
 import {
     GameMode,
+    MatchLengthMode,
     RankingEntry1P,
     RankingEntry2PIndividual,
     RoundResult,
@@ -25,6 +26,7 @@ export class MatchManager {
 
     // Match State
     private gameMode: GameMode | null = null;
+    private matchLengthMode: MatchLengthMode = MatchLengthMode.BestOf7; // Default to Best of 7
     private player1RoundsWon: number = 0;
     private player2RoundsWon: number = 0;
     private currentRoundNumber: number = 1;
@@ -56,6 +58,16 @@ export class MatchManager {
     public setGameMode(mode: GameMode): void {
         this.gameMode = mode;
         this.roundManager.setGameMode(mode); // Inform RoundManager too
+    }
+
+    /**
+     * Sets the match length mode (Best of 3, 5, or 7).
+     */
+    public setMatchLengthMode(mode: MatchLengthMode): void {
+        this.matchLengthMode = mode;
+        this.debugControl?.logEvent("MatchState", {
+            message: `Match length mode set to ${mode}.`,
+        });
     }
 
     /**
@@ -227,14 +239,28 @@ export class MatchManager {
     }
 
     /**
-     * Checks if the match is over (Best of 7 condition met).
+     * Checks if the match is over based on the selected match length mode.
      */
     private checkMatchOver(): boolean {
-        const matchOver = this.player1RoundsWon === 4 ||
-            this.player2RoundsWon === 4;
+        let requiredWins = 4; // Default for Best of 7
+
+        // Determine required wins based on match length mode
+        if (this.matchLengthMode === MatchLengthMode.BestOf3) {
+            requiredWins = 2; // Best of 3 requires 2 wins
+        } else if (this.matchLengthMode === MatchLengthMode.BestOf5) {
+            requiredWins = 3; // Best of 5 requires 3 wins
+        } else if (this.matchLengthMode === MatchLengthMode.BestOf7) {
+            requiredWins = 4; // Best of 7 requires 4 wins
+        }
+
+        const matchOver = this.player1RoundsWon === requiredWins ||
+            this.player2RoundsWon === requiredWins;
+
         if (matchOver) {
             this.debugControl?.logEvent("MatchCheck", {
                 message: "Match over condition check returned true.",
+                matchLengthMode: this.matchLengthMode,
+                requiredWins: requiredWins,
                 scoreP1: this.player1RoundsWon,
                 scoreP2: this.player2RoundsWon,
             });
@@ -441,5 +467,9 @@ export class MatchManager {
 
     public getIsMatchOver(): boolean {
         return this.isMatchOver;
+    }
+
+    public getMatchLengthMode(): MatchLengthMode {
+        return this.matchLengthMode;
     }
 }

@@ -11,6 +11,13 @@ export enum GameMode {
     None = "none",
 }
 
+// Define match length modes
+export enum MatchLengthMode {
+    BestOf3 = "bestOf3",
+    BestOf5 = "bestOf5",
+    BestOf7 = "bestOf7",
+}
+
 // Define structure for round history
 export interface RoundResult {
     round: number;
