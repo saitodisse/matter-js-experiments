@@ -53,18 +53,23 @@ canvas {
   top: 20px;
   right: 20px;
   display: flex;
-  flex-direction: column; /* Stack elements vertically */
-  align-items: flex-end; /* Align items to the right */
+  flex-direction: column;
+  /* Stack elements vertically */
+  align-items: flex-end;
+  /* Align items to the right */
   gap: 10px;
   z-index: 1000;
 }
 
 /* Added style for current match score display */
 #match-score-display {
-  padding: 8px 15px; /* Smaller padding */
-  background-color: rgba(0, 0, 0, 0.6); /* Slightly more transparent */
+  padding: 8px 15px;
+  /* Smaller padding */
+  background-color: rgba(0, 0, 0, 0.6);
+  /* Slightly more transparent */
   color: white;
-  font-size: 18px; /* Smaller font */
+  font-size: 18px;
+  /* Smaller font */
   font-family: Arial, sans-serif;
   border-radius: 5px;
 }
@@ -88,15 +93,19 @@ canvas {
   font-family: Arial, sans-serif;
   border-radius: 5px;
 }
+
 /* Added style for player turn display */
 #player-turn-display {
-  padding: 8px 15px; /* Slightly smaller padding */
+  padding: 8px 15px;
+  /* Slightly smaller padding */
   background-color: rgba(0, 0, 0, 0.7);
   color: white;
-  font-size: 18px; /* Slightly smaller font */
+  font-size: 18px;
+  /* Slightly smaller font */
   font-family: Arial, sans-serif;
   border-radius: 5px;
-  text-align: center; /* Center the text */
+  text-align: center;
+  /* Center the text */
 }
 
 /* Game Start Modal */
@@ -140,8 +149,10 @@ canvas {
   border-radius: 10px;
   text-align: center;
   max-width: 400px;
-  max-height: 90vh; /* Prevent modal from being too tall */
-  overflow-y: auto; /* Add scroll if content overflows */
+  max-height: 90vh;
+  /* Prevent modal from being too tall */
+  overflow-y: auto;
+  /* Add scroll if content overflows */
 }
 
 .modal-content h2 {
@@ -165,14 +176,41 @@ canvas {
   color: #555;
 }
 
+#logo_image {
+  max-width: 90%;
+  height: auto;
+}
+
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 18px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
 #final-match-score {
   /* Renamed from final-score */
-  text-align: center; /* Centered */
-  font-size: 20px; /* Slightly smaller */
-  margin: 15px 0; /* Adjusted margin */
+  text-align: center;
+  /* Centered */
+  font-size: 20px;
+  /* Slightly smaller */
+  margin: 15px 0;
+  /* Adjusted margin */
   font-weight: bold;
   color: #327534;
-  white-space: pre-wrap; /* Allow wrapping */
+  white-space: pre-wrap;
+  /* Allow wrapping */
 }
 
 /* Styles for Round Summary */
@@ -180,17 +218,20 @@ canvas {
   margin-top: 15px;
   text-align: left;
   font-size: 14px;
-  max-height: 150px; /* Limit height and add scroll */
+  max-height: 150px;
+  /* Limit height and add scroll */
   overflow-y: auto;
   border: 1px solid #eee;
   padding: 10px;
   border-radius: 5px;
 }
+
 #round-summary ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 #round-summary li {
   margin-bottom: 5px;
 }
@@ -201,11 +242,13 @@ canvas {
   text-align: left;
   font-size: 14px;
 }
+
 #ranking-display ol {
   list-style-position: inside;
   padding-left: 0;
   margin: 0;
 }
+
 #ranking-display li {
   margin-bottom: 3px;
 }
@@ -216,14 +259,17 @@ canvas {
   padding-top: 15px;
   border-top: 1px solid #eee;
 }
+
 #player-name-input-1,
 #player-name-input-2 {
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 14px;
-  max-width: 120px; /* Limit width */
+  max-width: 120px;
+  /* Limit width */
 }
+
 #save-score-button {
   background-color: #007bff;
   color: white;
@@ -233,8 +279,10 @@ canvas {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  vertical-align: middle; /* Align with inputs */
+  vertical-align: middle;
+  /* Align with inputs */
 }
+
 #save-score-button:hover {
   background-color: #0056b3;
 }
@@ -248,7 +296,8 @@ canvas {
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-  margin-top: 20px; /* Add margin above restart button */
+  margin-top: 20px;
+  /* Add margin above restart button */
 }
 
 #restart-button:hover {

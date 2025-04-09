@@ -42,7 +42,8 @@ export class UIManager {
     private gameStartModal!: HTMLElement;
     private onePlayerButton!: HTMLElement;
     private twoPlayerButton!: HTMLElement;
-    private gameModeSelection!: HTMLElement;
+    private gameStartDescription!: HTMLElement;
+    private gameModeButtons!: HTMLElement;
     private bestOf3Button!: HTMLElement;
     private bestOf5Button!: HTMLElement;
     private bestOf7Button!: HTMLElement;
@@ -121,8 +122,8 @@ export class UIManager {
         this.twoPlayerButton = document.getElementById(
             "two-player-button",
         ) as HTMLElement;
-        this.gameModeSelection = document.getElementById(
-            "game-mode-selection",
+        this.gameModeButtons = document.getElementById(
+            "game-mode-buttons",
         ) as HTMLElement;
         this.bestOf3Button = document.getElementById(
             "best-of-3-button",
@@ -132,6 +133,9 @@ export class UIManager {
         ) as HTMLElement;
         this.bestOf7Button = document.getElementById(
             "best-of-7-button",
+        ) as HTMLElement;
+        this.gameStartDescription = document.getElementById(
+            "game-start-description",
         ) as HTMLElement;
 
         // Add click event listeners for player selection
@@ -302,9 +306,7 @@ export class UIManager {
      */
     public showGameStartModal(): void {
         // Reset to initial state
-        this.gameModeSelection.style.display = "none";
-        this.onePlayerButton.style.display = "block";
-        this.twoPlayerButton.style.display = "block";
+        this.gameModeButtons.style.display = "none";
 
         // Show the modal
         this.gameStartModal.style.opacity = "1";
@@ -323,12 +325,14 @@ export class UIManager {
      * Shows the game mode selection (Best of 3, 5, 7)
      */
     private showGameModeSelection(): void {
+        // set description
+        this.gameStartDescription.textContent = "Select the match length";
         // Hide player selection buttons
         this.onePlayerButton.style.display = "none";
         this.twoPlayerButton.style.display = "none";
 
         // Show game mode selection
-        this.gameModeSelection.style.display = "block";
+        this.gameModeButtons.style.display = "block";
     }
 
     /**
