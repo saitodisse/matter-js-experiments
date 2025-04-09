@@ -169,7 +169,7 @@ export class InputHandler {
             if (clickedBody.area) {
                 // when area is large, scalarForce is strong
                 // when area is small, scalarForce is weak
-                scalarForce = scalarForce * (clickedBody.area / 1000); // Proportional to area (baseline 1000)
+                scalarForce = scalarForce * (clickedBody.area / 1500); // Proportional to area (baseline 1000)
             }
 
             // Calculate the force to apply (proportional to distance)

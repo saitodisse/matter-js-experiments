@@ -90,7 +90,7 @@ export class BoundaryBox {
      */
     private createBoxParts(): void {
         // Define fixed dimensions for the box
-        const boxWidth = 180;
+        const boxWidth = 200;
         const boxHeight = 140;
         this.boxDimensions = { width: boxWidth, height: boxHeight }; // Store fixed dimensions
 
@@ -136,7 +136,7 @@ export class BoundaryBox {
             bounds: this.boxBounds,
         });
 
-        const WALL_THICKNESS = 20;
+        const WALL_THICKNESS = 40;
 
         // Create the bottom wall of the box
         // Create the bottom wall of the box using calculated center and dimensions
@@ -163,8 +163,8 @@ export class BoundaryBox {
         // Create the left wall of the box
         // Create the left wall of the box
         const leftBox = Matter.Bodies.rectangle(
-            boxCenterX - boxWidth / 2, // X position (left edge of the box)
-            boxCenterY, // Y position (center of the left wall)
+            boxCenterX - boxWidth / 2 - WALL_THICKNESS / 2, // X position (left edge of the box)
+            boxCenterY + WALL_THICKNESS / 2, // Y position (center of the left wall)
             WALL_THICKNESS, // Width (thickness of the wall)
             boxHeight, // Height (same as box height)
             {
@@ -185,8 +185,8 @@ export class BoundaryBox {
         // Create the right wall of the box
         // Create the right wall of the box
         const rightBox = Matter.Bodies.rectangle(
-            boxCenterX + boxWidth / 2, // X position (right edge of the box)
-            boxCenterY, // Y position (center of the right wall)
+            boxCenterX + boxWidth / 2 + WALL_THICKNESS / 2, // X position (right edge of the box)
+            boxCenterY + WALL_THICKNESS / 2, // Y position (center of the right wall)
             WALL_THICKNESS, // Width (thickness of the wall)
             boxHeight, // Height (same as box height)
             {

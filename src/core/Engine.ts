@@ -46,7 +46,10 @@ export class Engine {
      */
     constructor(options: SimulationOptions & { audioManager?: AudioManager }) { // Added audioManager to options
         // Create the Matter.js physics engine
-        this.engine = Matter.Engine.create();
+        this.engine = Matter.Engine.create({
+            positionIterations: 12,
+            velocityIterations: 8
+        });
         // Get a reference to the world (container for all bodies)
         this.world = this.engine.world;
 
