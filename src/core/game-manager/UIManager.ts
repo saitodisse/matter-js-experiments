@@ -14,6 +14,20 @@ import {
     RoundResult,
 } from "./types";
 
+// Helper function to get match mode display name
+function getMatchModeDisplayName(mode: MatchLengthMode): string {
+    switch (mode) {
+        case MatchLengthMode.BestOf3:
+            return "Best of 3";
+        case MatchLengthMode.BestOf5:
+            return "Best of 5";
+        case MatchLengthMode.BestOf7:
+            return "Best of 7";
+        default:
+            return "Unknown";
+    }
+}
+
 export class UIManager {
     private debugControl?: DebugControl;
     private audioManager: AudioManager; // Needed for button clicks
@@ -353,6 +367,7 @@ export class UIManager {
         rankingData: RankingEntry1P[] | RankingEntry2PIndividual[], // Combined type
         canSaveScoreP1: boolean, // New: Flag to show P1 input
         canSaveScoreP2: boolean, // New: Flag to show P2 input (only relevant in 2P)
+        matchMode: MatchLengthMode = MatchLengthMode.BestOf7, // Default to Best of 7
     ): void {
         let finalMessage = "";
         // Determine if *any* save option should be shown (at least one player qualifies)
@@ -388,6 +403,7 @@ export class UIManager {
             this.rankingDisplayElement.innerHTML = this.displayRanking(
                 rankingData,
                 gameMode === "two",
+                matchMode
             );
             this.rankingDisplayElement.style.display = "block";
         }
@@ -491,10 +507,11 @@ export class UIManager {
     private displayRanking(
         rankingData: RankingEntry1P[] | RankingEntry2PIndividual[],
         is2P: boolean,
+        matchMode: MatchLengthMode = MatchLengthMode.BestOf7
     ): string {
+        const modeDisplayName = getMatchModeDisplayName(matchMode);
         let rankingHtml = `<h4>Ranking (${
-            is2P ? "2 Player - Top Scores" : "1 Player - Top Scores"
-        })</h4>`;
+            is2P ? "2 Player" : "1 Player"} - ${modeDisplayName} - Top Scores)</h4>`;
         if (!rankingData || rankingData.length === 0) {
             rankingHtml += "<p>No rankings yet.</p>";
             return rankingHtml;
@@ -524,11 +541,13 @@ export class UIManager {
     public updateRankingDisplay(
         rankingData: RankingEntry1P[] | RankingEntry2PIndividual[],
         is2P: boolean,
+        matchMode: MatchLengthMode = MatchLengthMode.BestOf7
     ): void {
         if (this.rankingDisplayElement) {
             this.rankingDisplayElement.innerHTML = this.displayRanking(
                 rankingData,
                 is2P,
+                matchMode
             );
         }
         // Hide save elements after successful save

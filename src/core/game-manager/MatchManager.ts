@@ -289,23 +289,28 @@ export class MatchManager {
         if (this.gameMode === "single") {
             canSaveScoreP1 = this.rankingManager.isTopScore1P(
                 this.totalMatchScore1P,
+                this.matchLengthMode
             );
-            rankingData = this.rankingManager.getRanking1P();
+            rankingData = this.rankingManager.getRanking1P(this.matchLengthMode);
             this.debugControl?.logEvent("RankingCheck", {
                 mode: "1P",
+                matchMode: this.matchLengthMode,
                 score: this.totalMatchScore1P,
                 canSave: canSaveScoreP1,
             });
         } else { // two
             canSaveScoreP1 = this.rankingManager.isTopScore2PIndividual(
                 this.totalMatchScoreP1_2P,
+                this.matchLengthMode
             );
             canSaveScoreP2 = this.rankingManager.isTopScore2PIndividual(
                 this.totalMatchScoreP2_2P,
+                this.matchLengthMode
             );
-            rankingData = this.rankingManager.getRanking2PIndividual();
+            rankingData = this.rankingManager.getRanking2PIndividual(this.matchLengthMode);
             this.debugControl?.logEvent("RankingCheck", {
                 mode: "2P",
+                matchMode: this.matchLengthMode,
                 scoreP1: this.totalMatchScoreP1_2P,
                 canSaveP1: canSaveScoreP1,
                 scoreP2: this.totalMatchScoreP2_2P,
@@ -324,6 +329,7 @@ export class MatchManager {
             rankingData,
             canSaveScoreP1, // Pass flag for P1
             canSaveScoreP2, // Pass flag for P2 (relevant in 2P)
+            this.matchLengthMode // Pass the match length mode
         );
     }
 
@@ -338,22 +344,26 @@ export class MatchManager {
             updatedRankingData = this.rankingManager.saveRanking1P(
                 name1,
                 this.totalMatchScore1P,
+                this.matchLengthMode
             );
         } else if (this.gameMode === "two" && name2) { // Ensure name2 exists for 2P
             // Save both players, update ranking data after both saves potentially finish
             this.rankingManager.saveRanking2PIndividual(
                 name1,
                 this.totalMatchScoreP1_2P,
+                this.matchLengthMode
             );
             this.rankingManager.saveRanking2PIndividual(
                 name2,
                 this.totalMatchScoreP2_2P,
+                this.matchLengthMode
             );
-            updatedRankingData = this.rankingManager.getRanking2PIndividual(); // Re-fetch after saving both
+            updatedRankingData = this.rankingManager.getRanking2PIndividual(this.matchLengthMode); // Re-fetch after saving both
         } else {
             this.debugControl?.logEvent("RankingSaveSkipped", {
                 reason: "Invalid state for saving score in MatchManager",
                 mode: this.gameMode,
+                matchMode: this.matchLengthMode,
                 name1,
                 name2,
             });
@@ -364,11 +374,13 @@ export class MatchManager {
         this.uiManager.updateRankingDisplay(
             updatedRankingData,
             this.gameMode === "two",
+            this.matchLengthMode
         );
 
         this.debugControl?.logEvent("Ranking", {
             message: "Score save handled by MatchManager.",
             mode: this.gameMode,
+            matchMode: this.matchLengthMode
         });
     }
 

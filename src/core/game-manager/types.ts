@@ -34,11 +34,13 @@ export interface RoundResult {
 export interface RankingEntry1P {
     name: string;
     score: number; // Total match score (sum of round accuracy scores, max 400)
+    matchMode: MatchLengthMode; // The match length mode used
 }
 // New interface for 2P individual ranking
 export interface RankingEntry2PIndividual {
     name: string;
     score: number; // Total match score (sum of round accuracy scores)
+    matchMode: MatchLengthMode; // The match length mode used
 }
 
 // Type for game reset scenarios
